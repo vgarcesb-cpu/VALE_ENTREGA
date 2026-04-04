@@ -22,7 +22,6 @@
 
         .header-title { text-align: center; color: var(--blue); margin: 0 0 20px 0; font-size: 1.4em; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid var(--blue); padding-bottom: 10px; }
 
-        /* ESTADOS FORZADOS PARA PDF */
         .status-box {
             text-align: center;
             font-weight: bold;
@@ -45,8 +44,8 @@
         input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; background: #fff; }
         input[readonly] { background: #e9ecef; font-weight: bold; color: var(--blue); border: none; }
 
-        #sig-wrap { background: #fff; border: 2px dashed var(--blue); border-radius: 12px; height: 180px; position: relative; margin-top: 5px; }
-        canvas { width: 100%; height: 100%; touch-action: none; }
+        #sig-wrap { background: #fff; border: 2px dashed var(--blue); border-radius: 12px; height: 180px; position: relative; margin-top: 5px; overflow: hidden; }
+        canvas { width: 100%; height: 100%; touch-action: none; display: block; }
 
         .no-print { width: 100%; max-width: 500px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
         .btn { padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; color: white; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -119,7 +118,10 @@
         db = e.target.result;
         db.createObjectStore("vales", { keyPath: "id" });
     };
-    request.onsuccess = (e) => { db = e.target.result; nuevo(); };
+    request.onsuccess = (e) => { 
+        db = e.target.result; 
+        nuevo(); 
+    };
 
     function nuevo() {
         document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
@@ -127,19 +129,31 @@
         document.getElementById('producto').value = "";
         document.getElementById('responsable').value = "";
         document.getElementById('obs').value = "";
+        
         const st = document.getElementById('statusTxt');
         st.className = "status-box status-emision";
         st.innerText = "ESTADO: EN EMISIÓN";
+        
         document.getElementById('btnFinalizar').style.display = "block";
         document.getElementById('btnDevolver').style.display = "none";
+        
         limpiarCanvas();
-        ajustarCanvas();
+        
+        // CORRECCIÓN 3: Esperar 150ms a que el S25 renderice el DOM antes de medir el canvas
+        setTimeout(ajustarCanvas, 150);
     }
 
+    // CORRECCIÓN 3: Asegurar que tome el tamaño de su contenedor padre
     function ajustarCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width; canvas.height = rect.height;
-        ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
+        const wrap = document.getElementById('sig-wrap');
+        const rect = wrap.getBoundingClientRect();
+        if (rect.width === 0) return; // Seguridad extra
+        
+        canvas.width = rect.width; 
+        canvas.height = rect.height;
+        ctx.lineWidth = 3; 
+        ctx.lineCap = 'round'; 
+        ctx.strokeStyle = '#000';
     }
 
     const getPos = (e) => {
@@ -148,6 +162,7 @@
         const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
         return {x, y};
     };
+    
     canvas.addEventListener('touchstart', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, {passive:false});
     canvas.addEventListener('touchmove', (e) => { if(!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, {passive:false});
     window.addEventListener('touchend', () => dibujando = false);
@@ -162,6 +177,7 @@
         const tx = db.transaction("vales", "readonly");
         const store = tx.objectStore("vales");
         const req = store.get(id);
+        
         req.onsuccess = () => {
             const r = req.result;
             if(r) {
@@ -170,9 +186,17 @@
                 document.getElementById('producto').value = r.producto;
                 document.getElementById('responsable').value = r.responsable;
                 document.getElementById('obs').value = r.obs;
+                
                 const img = new Image();
-                img.onload = () => { limpiarCanvas(); ctx.drawImage(img, 0, 0); };
+                img.onload = () => { 
+                    // CORRECCIÓN 4: Reajustar canvas antes de inyectar la firma para evitar fallos de resolución
+                    ajustarCanvas();
+                    limpiarCanvas(); 
+                    // Se dibuja obligando a que tome el 100% del tamaño del canvas actual
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
+                };
                 img.src = r.firma;
+                
                 const st = document.getElementById('statusTxt');
                 if(r.estado === "DEVUELTO") {
                     st.className = "status-box status-devuelto"; st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
@@ -182,15 +206,15 @@
                     document.getElementById('btnDevolver').style.display = "block";
                 }
                 document.getElementById('btnFinalizar').style.display = "none";
-            } else { alert("ID no encontrado."); }
+            } else { alert("Folio no encontrado en la base de datos."); }
         };
     }
 
     function finalizarProceso() {
         if(!document.getElementById('producto').value) return alert("Falta Producto");
+        
         const st = document.getElementById('statusTxt');
         st.className = "status-box status-registrado";
-        // ✅ CORRECCIÓN APLICADA AQUÍ:
         st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
 
         const vale = {
@@ -205,10 +229,16 @@
 
         const tx = db.transaction("vales", "readwrite");
         tx.objectStore("vales").put(vale);
+        
         tx.oncomplete = () => {
+            // CORRECCIÓN 2: Ocultamos Finalizar y MOSTRAMOS Devolver inmediatamente
+            document.getElementById('btnFinalizar').style.display = "none";
+            document.getElementById('btnDevolver').style.display = "block";
+
             setTimeout(() => { 
                 window.print(); 
-                setTimeout(() => { nuevo(); }, 2000); 
+                // CORRECCIÓN 2: SE ELIMINÓ EL `nuevo()` AUTOMÁTICO.
+                // Ahora el registro se queda en pantalla esperando tu próxima acción.
             }, 1000);
         };
     }
@@ -218,18 +248,24 @@
         const tx = db.transaction("vales", "readwrite");
         const store = tx.objectStore("vales");
         const req = store.get(id);
+        
         req.onsuccess = () => {
             const data = req.result;
             data.estado = "DEVUELTO";
             data.fecha = new Date().toLocaleDateString() + " (Devuelto)";
             store.put(data);
+            
             const st = document.getElementById('statusTxt');
             st.className = "status-box status-devuelto";
             st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
             document.getElementById('fecha').value = data.fecha;
+            
+            // Ocultamos el botón de devolver porque ya se completó el ciclo
+            document.getElementById('btnDevolver').style.display = "none";
+
             setTimeout(() => { 
                 window.print(); 
-                setTimeout(() => { nuevo(); }, 2000);
+                // SE ELIMINÓ EL `nuevo()` AUTOMÁTICO.
             }, 1000);
         };
     }
@@ -242,6 +278,11 @@
         const msg = `*AGA PROTOCOLO*%0A*ID:* ${id}%0A*Equipo:* ${prod}%0A*Responsable:* ${resp}%0A*${est}*`;
         window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
+
+    // Seguridad extra: Si se rota la pantalla del S25, reajustamos el canvas
+    window.addEventListener('resize', () => {
+        setTimeout(ajustarCanvas, 200);
+    });
 </script>
 </body>
 </html>
