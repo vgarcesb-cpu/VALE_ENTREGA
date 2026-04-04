@@ -8,13 +8,12 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icono.png">
 
     <style>
         :root { --primary: #2c3e50; --success: #27ae60; --danger: #e74c3c; --info: #3498db; --purple: #9b59b6; }
-        body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; justify-content: center; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; justify-content: center; margin: 0; -webkit-tap-highlight-color: transparent; }
         
         .vale-card { 
             background: white; width: 100%; max-width: 500px; 
@@ -22,41 +21,45 @@
             border-top: 8px solid var(--primary); box-sizing: border-box;
         }
 
-        h2 { text-align: center; color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; }
-        .status-badge { text-align: center; font-weight: bold; padding: 8px; border-radius: 4px; margin-bottom: 15px; background: #f1c40f; font-size: 13px; color: #000; }
+        h2 { text-align: center; color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; text-transform: uppercase; }
+        .status-badge { text-align: center; font-weight: bold; padding: 10px; border-radius: 4px; margin-bottom: 15px; background: #f1c40f; font-size: 14px; color: #000; border: 1px solid #d4ac0d; }
 
         .search-box { display: flex; gap: 5px; margin-bottom: 15px; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #dee2e6; }
-        .search-box input { flex-grow: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; }
-        .btn-search { background: var(--info); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .search-box input { flex-grow: 1; padding: 10px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; }
+        .btn-search { background: var(--info); color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; }
 
-        .section { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 4px; color: #34495e; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; font-size: 14px; background: #fff; color: #000; }
-        input[readonly] { background-color: #f1f3f4 !important; color: #222 !important; font-weight: bold; }
-
-        #signature-pad { border: 2px dashed #bdc3c7; background: #fff; cursor: crosshair; touch-action: none; width: 100%; height: 180px; border-radius: 6px; }
-        .signature-controls { display: flex; justify-content: flex-end; margin-top: 5px; }
+        .section { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #34495e; text-transform: uppercase; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; font-size: 15px; background: #fff; color: #000; }
         
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 14px; transition: 0.2s; }
-        .btn-save { background: var(--success); color: white; }
+        /* Estilo agresivo para campos de lectura */
+        input[readonly] { background-color: #e9ecef !important; color: #2c3e50 !important; font-weight: 800 !important; border: 1px solid #ced4da; }
+
+        #signature-pad { border: 2px dashed #34495e; background: #fff; cursor: crosshair; touch-action: none; width: 100%; height: 200px; border-radius: 8px; }
+        .signature-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 12px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-save { background: var(--success); color: white; box-shadow: 0 4px #1e8449; }
+        .btn-save:active { box-shadow: 0 0; transform: translateY(4px); }
         .btn-return { background: var(--danger); color: white; display: none; }
         .btn-print-dev { background: var(--purple); color: white; display: none; }
-        .btn-clear { background: #95a5a6; color: white; font-size: 11px; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-clear { background: #95a5a6; color: white; font-size: 12px; padding: 8px 15px; border: none; border-radius: 4px; }
 
         @media print {
             .btn, .btn-clear, .signature-controls, .search-box, .status-badge { display: none !important; }
             body { background: white; padding: 0; }
-            .vale-card { box-shadow: none; border: 1px solid #000; width: 100%; max-width: 100%; }
+            .vale-card { box-shadow: none; border: 1px solid #000; width: 100%; max-width: 100%; padding: 10px; }
+            input, textarea { border: none; border-bottom: 1px solid #000; border-radius: 0; }
         }
     </style>
 </head>
-<body onload="inicializar()">
+<body>
 
 <div class="vale-card">
     <h2>AGA: VALE DE ENTREGA</h2>
     
     <div class="search-box">
-        <input type="text" id="inputBuscar" placeholder="Buscar ID (AGA-2026-XXXX)">
+        <input type="text" id="inputBuscar" placeholder="ID (Ej: AGA-2026-1234)">
         <button class="btn-search" onclick="buscarVale()">BUSCAR</button>
     </div>
 
@@ -64,12 +67,12 @@
 
     <div class="section">
         <label>ID de Transacción</label>
-        <input type="text" id="idVale" readonly placeholder="Generando ID...">
+        <input type="text" id="idVale" readonly>
     </div>
 
     <div class="section">
         <label>Fecha de Registro</label>
-        <input type="text" id="fechaAuto" readonly placeholder="Generando fecha...">
+        <input type="text" id="fechaAuto" readonly>
     </div>
 
     <div class="section">
@@ -84,14 +87,15 @@
 
     <div class="section">
         <label>Observación Técnica</label>
-        <textarea id="observaciones" rows="3" placeholder="Estado del equipo..."></textarea> 
+        <textarea id="observaciones" rows="3" placeholder="Indicar estado de recepción..."></textarea> 
     </div>
 
     <div class="section">
         <label>Firma de Responsabilidad</label>
         <canvas id="signature-pad"></canvas>
         <div class="signature-controls">
-            <button class="btn-clear" onclick="clearSignature()">Borrar Firma</button>
+            <span style="font-size: 10px; color: #7f8c8d;">Firmar sobre la línea punteada</span>
+            <button class="btn-clear" onclick="clearSignature()">BORRAR</button>
         </div>
     </div>
 
@@ -101,24 +105,29 @@
 </div>
 
 <script>
-    // Forzamos la inicialización al cargar la ventana
-    function inicializar() {
+    // MOTOR AGRESIVO DE CARGA
+    function ejecutarArranque() {
+        // 1. Generar ID
         const idCampo = document.getElementById('idVale');
-        const fechaCampo = document.getElementById('fechaAuto');
-        
-        // Generar ID si está vacío
-        if (!idCampo.value || idCampo.value === "Generando ID...") {
+        if (!idCampo.value) {
             idCampo.value = "AGA-2026-" + Math.floor(Math.random() * 9000 + 1000);
         }
-        
-        // Generar Fecha si está vacía
-        if (!fechaCampo.value || fechaCampo.value === "Generando fecha...") {
+
+        // 2. Generar Fecha
+        const fechaCampo = document.getElementById('fechaAuto');
+        if (!fechaCampo.value) {
             const hoy = new Date();
             fechaCampo.value = hoy.toLocaleDateString() + " " + hoy.toLocaleTimeString();
         }
-        
+
+        // 3. Preparar Lienzo
         resizeCanvas();
     }
+
+    // Disparadores múltiples para asegurar ejecución en S25
+    window.addEventListener('load', ejecutarArranque);
+    document.addEventListener('DOMContentLoaded', ejecutarArranque);
+    setTimeout(ejecutarArranque, 500); // Refuerzo por si el navegador es lento
 
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
@@ -129,6 +138,9 @@
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         ctx.scale(ratio, ratio);
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#2c3e50';
     }
 
     function getPos(e) {
@@ -138,15 +150,22 @@
         return { x: clientX - rect.left, y: clientY - rect.top };
     }
 
-    function startDrawing(e) { drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
-    function stopDrawing() { drawing = false; }
+    function startDrawing(e) { 
+        drawing = true; 
+        const pos = getPos(e); 
+        ctx.beginPath(); 
+        ctx.moveTo(pos.x, pos.y); 
+    }
+
     function draw(e) {
         if (!drawing) return;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         const pos = getPos(e);
-        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#2c3e50';
-        ctx.lineTo(pos.x, pos.y); ctx.stroke();
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
     }
+
+    function stopDrawing() { drawing = false; }
 
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
@@ -158,7 +177,9 @@
     function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
     function buscarVale() {
-        const idBusqueda = document.getElementById('inputBuscar').value;
+        const idBusqueda = document.getElementById('inputBuscar').value.trim();
+        if (!idBusqueda) return alert("Ingrese un ID para buscar");
+
         const registros = JSON.parse(localStorage.getItem('vales_aga')) || [];
         const vale = registros.find(v => v.id === idBusqueda);
 
@@ -192,7 +213,7 @@
                 document.getElementById('btnFinalizar').style.display = "none";
                 document.getElementById('btnImprimirDevuelto').style.display = "none";
             }
-        } else { alert("❌ ID no encontrado."); }
+        } else { alert("❌ Registro no encontrado."); }
     }
 
     function registrarRetorno() {
@@ -202,22 +223,26 @@
         if (idx !== -1) {
             registros[idx].estado = "DEVUELTO";
             localStorage.setItem('vales_aga', JSON.stringify(registros));
-            alert("✅ Retorno registrado.");
+            alert("✅ Devolución Registrada con Éxito.");
             location.reload();
         }
     }
 
     function finalizarEntrega() {
+        const prod = document.getElementById('producto').value;
+        const cli = document.getElementById('cliente').value;
+        
+        if(!prod || !cli) return alert("⚠️ Debe completar Producto y Responsable.");
+
         const datos = {
             id: document.getElementById('idVale').value,
             fecha: document.getElementById('fechaAuto').value,
-            producto: document.getElementById('producto').value,
-            cliente: document.getElementById('cliente').value,
+            producto: prod,
+            cliente: cli,
             observacion: document.getElementById('observaciones').value,
             firma: canvas.toDataURL(),
             estado: "REGISTRADO"
         };
-        if(!datos.producto || !datos.cliente) return alert("⚠️ Faltan datos");
         
         let registros = JSON.parse(localStorage.getItem('vales_aga')) || [];
         registros.push(datos);
@@ -225,19 +250,12 @@
         
         document.title = "Vale_" + datos.id;
         window.print();
-        setTimeout(() => location.reload(), 1500);
+        setTimeout(() => location.reload(), 1000);
     }
 
     function imprimirActa() {
         document.title = "Devolucion_" + document.getElementById('idVale').value;
         window.print();
-    }
-
-    // Registro automático del SW
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').catch(() => {});
-        });
     }
 </script>
 </body>
