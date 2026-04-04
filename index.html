@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGA PROTOCOLO | Final S25</title>
+    <title>AGA PROTOCOLO | VICTORIA</title>
     <style>
         :root { --blue: #2c3e50; --green: #27ae60; --yellow: #f1c40f; --red: #e74c3c; --purple: #8e44ad; --wa: #25d366; }
         body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
@@ -28,16 +28,15 @@
         canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
         
         .no-print { width: 100%; max-width: 480px; margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; color: white; transition: 0.2s; }
+        .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; color: white; }
         .btn-search { background: var(--blue); }
         .btn-save { background: var(--green); }
         .btn-wa { background: var(--wa); border: 2px solid #1ebea5; }
-        .btn-return { background: var(--purple); display: none; }
 
         @media print {
             .no-print { display: none !important; }
             body { padding: 0; background: white; }
-            #printableArea { box-shadow: none; border: 1px solid #000; max-width: 100%; }
+            #printableArea { box-shadow: none; border: 1px solid #000; max-width: 100%; margin: 0; }
         }
     </style>
 </head>
@@ -60,7 +59,7 @@
 
 <div class="no-print">
     <div style="display:flex; gap:0;">
-        <input type="text" id="busquedaId" style="flex:1; border-radius: 8px 0 0 8px; border:1px solid #ccc; padding:10px;" placeholder="Buscar ID...">
+        <input type="text" id="busquedaId" style="flex:1; border-radius: 8px 0 0 8px; border:1px solid #ccc; padding:10px;" placeholder="Ingresar ID...">
         <button class="btn btn-search" style="border-radius: 0 8px 8px 0; padding:10px 20px;" onclick="buscarIDB()">BUSCAR</button>
     </div>
     <button id="btnWhatsApp" class="btn btn-wa" onclick="enviarWhatsApp()">WhatsApp 📱</button>
@@ -75,13 +74,11 @@
     const ctx = canvas.getContext('2d');
     let dibujando = false;
 
-    // MOTOR INDEXED DB - Nombre de DB nuevo para evitar conflictos
-    const request = indexedDB.open("AGA_DB_FINAL_V2", 1);
+    // MOTOR INDEXED DB
+    const request = indexedDB.open("AGA_S25_FINAL", 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
-        if (!db.objectStoreNames.contains("vales")) {
-            db.createObjectStore("vales", { keyPath: "id" });
-        }
+        if (!db.objectStoreNames.contains("vales")) db.createObjectStore("vales", { keyPath: "id" });
     };
     request.onsuccess = (e) => { db = e.target.result; nuevo(); };
 
@@ -122,15 +119,12 @@
 
     function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-    // BUSCADOR REPARADO - Búsqueda Directa en IDB
+    // BÚSQUEDA REPARADA
     function buscarIDB() {
-        const idBuscado = document.getElementById('busquedaId').value.trim();
-        if(!idBuscado) return;
-
+        const id = document.getElementById('busquedaId').value.trim();
         const tx = db.transaction("vales", "readonly");
         const store = tx.objectStore("vales");
-        const req = store.get(idBuscado);
-
+        const req = store.get(id);
         req.onsuccess = () => {
             const r = req.result;
             if(r) {
@@ -139,11 +133,9 @@
                 document.getElementById('producto').value = r.producto;
                 document.getElementById('responsable').value = r.responsable;
                 document.getElementById('obs').value = r.obs;
-                
                 const img = new Image();
                 img.onload = () => { limpiarCanvas(); ctx.drawImage(img, 0, 0); };
                 img.src = r.firma;
-
                 const st = document.getElementById('statusTxt');
                 if(r.estado === "DEVUELTO") {
                     st.className = "status status-devuelto"; st.innerText = "Estado: Devolución Completada";
@@ -153,17 +145,16 @@
                     document.getElementById('btnDevolver').style.display = "block";
                 }
                 document.getElementById('btnFinalizar').style.display = "none";
-            } else { alert("ID no encontrado en la base de datos."); }
+            } else { alert("No encontrado"); }
         };
     }
 
-    // FINALIZAR: Guardar -> Pintar -> Imprimir -> Limpiar
+    // FINALIZAR: FLUJO ANTI-BLOQUEO S25
     function finalizarProceso() {
         if(!document.getElementById('producto').value) return alert("Falta Producto");
         
-        const idActual = document.getElementById('idVale').value;
         const vale = {
-            id: idActual,
+            id: document.getElementById('idVale').value,
             fecha: document.getElementById('fecha').value,
             producto: document.getElementById('producto').value,
             responsable: document.getElementById('responsable').value,
@@ -172,52 +163,43 @@
             estado: "REGISTRADO"
         };
 
-        // 1. Guardar en Base de Datos PRIMERO
         const tx = db.transaction("vales", "readwrite");
-        const store = tx.objectStore("vales");
-        store.put(vale);
+        tx.objectStore("vales").put(vale);
 
         tx.oncomplete = () => {
-            // 2. Pintar estado en pantalla
+            // 1. Forzamos cambio visual
             const st = document.getElementById('statusTxt');
             st.className = "status status-registrado";
             st.innerText = "Estado: En Custodia (Registrado)";
 
-            // 3. Pequeña pausa para asegurar el renderizado antes del PDF
+            // 2. Pausa para que el PDF no se "pegue" (Vista Previa fluida)
             setTimeout(() => { 
                 window.print(); 
-                // 4. Limpiar pantalla automáticamente tras 2 segundos
-                setTimeout(() => { 
-                    alert("Proceso Finalizado y Guardado.");
-                    nuevo(); 
-                }, 2000); 
+                // 3. Limpiar después de que el usuario cierre el PDF
+                setTimeout(() => { nuevo(); }, 1000); 
             }, 800);
         };
     }
 
     function devolverIDB() {
-        const idActual = document.getElementById('idVale').value;
+        const id = document.getElementById('idVale').value;
         const tx = db.transaction("vales", "readwrite");
         const store = tx.objectStore("vales");
-        const req = store.get(idActual);
+        const req = store.get(id);
 
         req.onsuccess = () => {
             const data = req.result;
             data.estado = "DEVUELTO";
-            data.fecha = "Devuelto: " + new Date().toLocaleString();
+            data.fecha = "Cerrado: " + new Date().toLocaleString();
             store.put(data);
 
-            const st = document.getElementById('statusTxt');
-            st.className = "status status-devuelto";
-            st.innerText = "Estado: Devolución Completada";
+            document.getElementById('statusTxt').className = "status status-devuelto";
+            document.getElementById('statusTxt').innerText = "Estado: Devolución Completada";
             document.getElementById('fecha').value = data.fecha;
 
             setTimeout(() => { 
                 window.print(); 
-                setTimeout(() => { 
-                    alert("Ciclo Cerrado Correctamente.");
-                    nuevo(); 
-                }, 2000);
+                setTimeout(() => { nuevo(); }, 1000);
             }, 800);
         };
     }
