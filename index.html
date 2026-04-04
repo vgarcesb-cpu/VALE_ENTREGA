@@ -2,20 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGA PROTOCOLO | PROFESIONAL</title>
-    <style>
-        :root { --blue: #1a3a5a; --green: #27ae60; --yellow: #f1c40f; --red: #e74c3c; --gray: #f4f7f6; }
-        
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #d0d7de; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AGA PROTOCOLO | TOTIS.CL MASTER</title>
 
-        #printableArea { 
-            background: white; 
-            width: 100%; 
-            max-width: 500px; 
-            padding: 25px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    <style>
+        :root {
+            --blue:   #1a3a5a;
+            --green:  #27ae60;
+            --yellow: #f1c40f;
+            --red:    #e74c3c;
+            --gray:   #f4f7f6;
+            --purple: #8e44ad;
+            /* MEJORA S25: Gestión de área segura para bordes físicos y barra de gestos */
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #d0d7de; 
+            padding: calc(var(--safe-top) + 10px) 10px 10px 10px; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #printableArea {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             box-sizing: border-box;
             border: 1px solid #bdc3c7;
         }
@@ -30,13 +50,14 @@
             border-radius: 12px;
             font-size: 15px;
             text-transform: uppercase;
-            border: 4px solid #000 !important; 
+            /* REGLA 2: Obligatorio para renderizado PDF en Android Chrome */
+            border: 4px solid #000 !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
-        .status-emision { background-color: var(--yellow) !important; color: #000 !important; }
-        .status-registrado { background-color: var(--red) !important; color: #fff !important; }
-        .status-devuelto { background-color: var(--green) !important; color: #fff !important; }
+        .status-emision    { background-color: var(--yellow) !important; color: #000 !important; }
+        .status-registrado { background-color: var(--red)    !important; color: #fff !important; }
+        .status-devuelto   { background-color: var(--green)  !important; color: #fff !important; }
 
         .section-box { background: var(--gray); padding: 15px; border-radius: 15px; border: 1px solid #ddd; margin-bottom: 15px; }
         .section-title { font-size: 11px; font-weight: bold; color: var(--blue); text-transform: uppercase; margin-bottom: 8px; display: block; border-left: 4px solid var(--blue); padding-left: 8px; }
@@ -47,17 +68,33 @@
         #sig-wrap { background: #fff; border: 2px dashed var(--blue); border-radius: 12px; height: 180px; position: relative; margin-top: 5px; overflow: hidden; }
         canvas { width: 100%; height: 100%; touch-action: none; display: block; }
 
-        .no-print { width: 100%; max-width: 500px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .no-print { 
+            width: 100%; 
+            max-width: 500px; 
+            margin-top: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            /* MEJORA S25: Padding dinámico inferior */
+            padding-bottom: calc(var(--safe-bottom) + 15px); 
+        }
+        
         .btn { padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; color: white; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-search { background: var(--blue); }
-        .btn-save { background: var(--green); }
-        .btn-wa { background: #25d366; }
+        .btn-search  { background: var(--blue); }
+        .btn-save    { background: var(--green); }
+        .btn-wa      { background: #25d366; }
+        .btn-devolver{ background: var(--purple); }
+        .btn-gris    { background: #7f8c8d; }
+
+        .admin-zone { 
+            display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid #bdc3c7; padding-top: 10px;
+        }
+        .btn-admin { flex: 1; padding: 10px; font-size: 10px; background: #34495e; color: white; border-radius: 8px; border: none; font-weight: bold; }
 
         @media print {
             .no-print { display: none !important; }
             body { background: white; padding: 0; }
             #printableArea { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
-            .status-box { border: 5px solid #000 !important; }
         }
     </style>
 </head>
@@ -65,7 +102,6 @@
 
 <div id="printableArea">
     <div class="header-title">PROTOCOLOS AGA</div>
-    
     <div id="statusTxt" class="status-box status-emision">ESTADO: EN EMISIÓN</div>
 
     <div class="section-box">
@@ -92,19 +128,25 @@
     <div class="section-box">
         <span class="section-title">Firma de Responsabilidad</span>
         <div id="sig-wrap"><canvas id="canvas"></canvas></div>
-        <button class="no-print" style="background:none; border:none; color:var(--red); font-size: 11px; cursor:pointer; width: 100%; text-align: right;" onclick="limpiarCanvas()">[ BORRAR FIRMA ]</button>
+        <button class="no-print" style="background:none; border:none; color:var(--red); font-size:11px; cursor:pointer; width:100%; text-align:right;" onclick="limpiarCanvas()">[ BORRAR FIRMA ]</button>
     </div>
 </div>
 
 <div class="no-print">
     <div style="display:flex; gap:5px;">
-        <input type="text" id="busquedaId" style="flex:1;" placeholder="Buscar Folio...">
+        <input type="text" id="busquedaId" style="flex:1;" placeholder="Folio a buscar...">
         <button class="btn btn-search" style="padding:10px 20px;" onclick="buscarIDB()">BUSCAR</button>
     </div>
     <button class="btn btn-wa" onclick="enviarWhatsApp()">WhatsApp 📱</button>
     <button id="btnFinalizar" class="btn btn-save" onclick="finalizarProceso()">FINALIZAR Y REGISTRAR</button>
-    <button id="btnDevolver" class="btn" style="background:var(--purple); display:none; background-color: #8e44ad;" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
-    <button class="btn" style="background:#7f8c8d;" onclick="nuevo()">NUEVO PROCEDIMIENTO</button>
+    <button id="btnDevolver" class="btn btn-devolver" style="display:none;" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
+    <button class="btn btn-gris" onclick="nuevo()">NUEVO PROCEDIMIENTO</button>
+
+    <div class="admin-zone">
+        <button class="btn-admin" onclick="exportarJSON()">EXPORTAR DB</button>
+        <button class="btn-admin" onclick="document.getElementById('inputImport').click()">IMPORTAR DB</button>
+        <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarJSON(event)">
+    </div>
 </div>
 
 <script>
@@ -113,110 +155,96 @@
     const ctx = canvas.getContext('2d');
     let dibujando = false;
 
+    // REGLA 1: Persistencia Exclusiva IndexedDB
     const request = indexedDB.open("AGA_DB_PROFESSIONAL", 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
-        db.createObjectStore("vales", { keyPath: "id" });
+        if(!db.objectStoreNames.contains("vales")) db.createObjectStore("vales", { keyPath: "id" });
     };
-    request.onsuccess = (e) => { 
-        db = e.target.result; 
-        nuevo(); 
-    };
+    request.onsuccess = (e) => { db = e.target.result; nuevo(); };
+    request.onerror = () => alert("Error crítico de IndexedDB.");
 
-    function nuevo() {
-        document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
-        document.getElementById('fecha').value = new Date().toLocaleDateString();
-        document.getElementById('producto').value = "";
-        document.getElementById('responsable').value = "";
-        document.getElementById('obs').value = "";
-        
-        const st = document.getElementById('statusTxt');
-        st.className = "status-box status-emision";
-        st.innerText = "ESTADO: EN EMISIÓN";
-        
-        document.getElementById('btnFinalizar').style.display = "block";
-        document.getElementById('btnDevolver').style.display = "none";
-        
-        limpiarCanvas();
-        
-        // CORRECCIÓN 3: Esperar 150ms a que el S25 renderice el DOM antes de medir el canvas
-        setTimeout(ajustarCanvas, 150);
-    }
-
-    // CORRECCIÓN 3: Asegurar que tome el tamaño de su contenedor padre
+    // REGLA 4: Manejo de Canvas
     function ajustarCanvas() {
         const wrap = document.getElementById('sig-wrap');
         const rect = wrap.getBoundingClientRect();
-        if (rect.width === 0) return; // Seguridad extra
-        
-        canvas.width = rect.width; 
-        canvas.height = rect.height;
-        ctx.lineWidth = 3; 
-        ctx.lineCap = 'round'; 
-        ctx.strokeStyle = '#000';
+        if (rect.width === 0) return;
+        canvas.width = rect.width; canvas.height = rect.height;
+        ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
     }
+
+    function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
     const getPos = (e) => {
         const r = canvas.getBoundingClientRect();
         const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
         const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-        return {x, y};
+        return { x, y };
     };
-    
-    canvas.addEventListener('touchstart', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, {passive:false});
-    canvas.addEventListener('touchmove', (e) => { if(!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, {passive:false});
+
+    canvas.addEventListener('touchstart', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, { passive: false });
     window.addEventListener('touchend', () => dibujando = false);
     canvas.addEventListener('mousedown', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', (e) => { if(!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('mousemove', (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
     window.addEventListener('mouseup', () => dibujando = false);
 
-    function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    window.addEventListener('resize', () => { setTimeout(ajustarCanvas, 200); });
+
+    // REGLA 3: Flujo de Estados
+    function nuevo() {
+        document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
+        document.getElementById('fecha').value = new Date().toLocaleDateString('es-CL');
+        document.getElementById('producto').value = "";
+        document.getElementById('responsable').value = "";
+        document.getElementById('obs').value = "";
+        document.getElementById('busquedaId').value = "";
+        const st = document.getElementById('statusTxt');
+        st.className = "status-box status-emision"; st.innerText = "ESTADO: EN EMISIÓN";
+        document.getElementById('btnFinalizar').style.display = "block";
+        document.getElementById('btnDevolver').style.display = "none";
+        limpiarCanvas(); 
+        setTimeout(ajustarCanvas, 150);
+    }
 
     function buscarIDB() {
+        if (!db) return;
         const id = document.getElementById('busquedaId').value.trim();
+        if (!id) return alert("Ingrese Folio.");
         const tx = db.transaction("vales", "readonly");
-        const store = tx.objectStore("vales");
-        const req = store.get(id);
-        
-        req.onsuccess = () => {
-            const r = req.result;
-            if(r) {
-                document.getElementById('idVale').value = r.id;
-                document.getElementById('fecha').value = r.fecha;
-                document.getElementById('producto').value = r.producto;
-                document.getElementById('responsable').value = r.responsable;
-                document.getElementById('obs').value = r.obs;
-                
+        tx.objectStore("vales").get(id).onsuccess = (e) => {
+            const r = e.target.result;
+            if (!r) return alert("Folio no encontrado.");
+            document.getElementById('idVale').value = r.id;
+            document.getElementById('fecha').value = r.fecha;
+            document.getElementById('producto').value = r.producto;
+            document.getElementById('responsable').value = r.responsable;
+            document.getElementById('obs').value = r.obs;
+            
+            ajustarCanvas();
+            if (r.firma) {
                 const img = new Image();
-                img.onload = () => { 
-                    // CORRECCIÓN 4: Reajustar canvas antes de inyectar la firma para evitar fallos de resolución
-                    ajustarCanvas();
-                    limpiarCanvas(); 
-                    // Se dibuja obligando a que tome el 100% del tamaño del canvas actual
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-                };
+                img.onload = () => { limpiarCanvas(); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
                 img.src = r.firma;
-                
-                const st = document.getElementById('statusTxt');
-                if(r.estado === "DEVUELTO") {
-                    st.className = "status-box status-devuelto"; st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
-                    document.getElementById('btnDevolver').style.display = "none";
-                } else {
-                    st.className = "status-box status-registrado"; st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
-                    document.getElementById('btnDevolver').style.display = "block";
-                }
+            }
+
+            const st = document.getElementById('statusTxt');
+            if (r.estado === "DEVUELTO") {
+                st.className = "status-box status-devuelto"; st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
+                document.getElementById('btnDevolver').style.display = "none";
                 document.getElementById('btnFinalizar').style.display = "none";
-            } else { alert("Folio no encontrado en la base de datos."); }
+            } else {
+                st.className = "status-box status-registrado"; st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
+                document.getElementById('btnDevolver').style.display = "block";
+                document.getElementById('btnFinalizar').style.display = "none";
+            }
         };
     }
 
     function finalizarProceso() {
-        if(!document.getElementById('producto').value) return alert("Falta Producto");
+        if (!db) return;
+        if (!document.getElementById('producto').value || !document.getElementById('responsable').value) return alert("Faltan datos.");
         
-        const st = document.getElementById('statusTxt');
-        st.className = "status-box status-registrado";
-        st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
-
         const vale = {
             id: document.getElementById('idVale').value,
             fecha: document.getElementById('fecha').value,
@@ -229,47 +257,38 @@
 
         const tx = db.transaction("vales", "readwrite");
         tx.objectStore("vales").put(vale);
-        
         tx.oncomplete = () => {
-            // CORRECCIÓN 2: Ocultamos Finalizar y MOSTRAMOS Devolver inmediatamente
+            document.getElementById('statusTxt').className = "status-box status-registrado";
+            document.getElementById('statusTxt').innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
             document.getElementById('btnFinalizar').style.display = "none";
             document.getElementById('btnDevolver').style.display = "block";
-
-            setTimeout(() => { 
-                window.print(); 
-                // CORRECCIÓN 2: SE ELIMINÓ EL `nuevo()` AUTOMÁTICO.
-                // Ahora el registro se queda en pantalla esperando tu próxima acción.
-            }, 1000);
+            // REGLA 2: Timeout antes de imprimir
+            setTimeout(() => { window.print(); }, 1000);
         };
     }
 
     function devolverIDB() {
+        if (!db) return;
         const id = document.getElementById('idVale').value;
         const tx = db.transaction("vales", "readwrite");
         const store = tx.objectStore("vales");
-        const req = store.get(id);
-        
-        req.onsuccess = () => {
-            const data = req.result;
+        store.get(id).onsuccess = (e) => {
+            const data = e.target.result;
+            if (!data) return;
             data.estado = "DEVUELTO";
-            data.fecha = new Date().toLocaleDateString() + " (Devuelto)";
+            data.fecha = new Date().toLocaleDateString('es-CL') + " (Devuelto)";
             store.put(data);
-            
-            const st = document.getElementById('statusTxt');
-            st.className = "status-box status-devuelto";
-            st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
-            document.getElementById('fecha').value = data.fecha;
-            
-            // Ocultamos el botón de devolver porque ya se completó el ciclo
-            document.getElementById('btnDevolver').style.display = "none";
-
-            setTimeout(() => { 
-                window.print(); 
-                // SE ELIMINÓ EL `nuevo()` AUTOMÁTICO.
-            }, 1000);
+            tx.oncomplete = () => {
+                document.getElementById('statusTxt').className = "status-box status-devuelto";
+                document.getElementById('statusTxt').innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
+                document.getElementById('fecha').value = data.fecha;
+                document.getElementById('btnDevolver').style.display = "none";
+                setTimeout(() => { window.print(); }, 1000);
+            };
         };
     }
 
+    // REGLA 5: WhatsApp
     function enviarWhatsApp() {
         const id = document.getElementById('idVale').value;
         const prod = document.getElementById('producto').value;
@@ -279,10 +298,42 @@
         window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
 
-    // Seguridad extra: Si se rota la pantalla del S25, reajustamos el canvas
-    window.addEventListener('resize', () => {
-        setTimeout(ajustarCanvas, 200);
-    });
+    // GESTIÓN DE BACKUPS
+    function exportarJSON() {
+        const tx = db.transaction("vales", "readonly");
+        tx.objectStore("vales").getAll().onsuccess = (e) => {
+            const blob = new Blob([JSON.stringify(e.target.result, null, 2)], {type: "application/json"});
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `AGA_BACKUP_${Date.now()}.json`;
+            a.click();
+        };
+    }
+
+    function importarJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                const tx = db.transaction("vales", "readwrite");
+                const store = tx.objectStore("vales");
+                data.forEach(item => store.put(item));
+                tx.oncomplete = () => { alert("Base de datos importada."); location.reload(); };
+            } catch (err) { alert("JSON no válido."); }
+        };
+        reader.readAsText(file);
+    }
+
+    // REGISTRO DE SERVICE WORKER PARA MODO OFFLINE
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW Registrado con éxito'))
+                .catch(err => console.log('Error al registrar SW', err));
+        });
+    }
 </script>
 </body>
 </html>
