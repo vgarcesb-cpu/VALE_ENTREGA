@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGA | Sistema Profesional</title>
+    <title>AGA PROTOCOLO | S25 Edition</title>
     <style>
         :root { --blue: #2c3e50; --green: #27ae60; --yellow: #f1c40f; --red: #e74c3c; --purple: #8e44ad; --wa: #25d366; }
         body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
@@ -31,7 +31,7 @@
         .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; color: white; transition: 0.2s; }
         .btn-search { background: var(--blue); }
         .btn-save { background: var(--green); }
-        .btn-wa { background: var(--wa); display: none; border: 2px solid #1ebea5; }
+        .btn-wa { background: var(--wa); }
         .btn-return { background: var(--purple); display: none; }
 
         @media print {
@@ -49,7 +49,7 @@
 
     <div class="field"><label>ID Transacción</label><input type="text" id="idVale" readonly></div>
     <div class="field"><label>Fecha</label><input type="text" id="fecha" readonly></div>
-    <div class="field"><label>Equipo (BMI)</label><input type="text" id="producto" placeholder="Describa el equipo..."></div>
+    <div class="field"><label>Equipo (BMI)</label><input type="text" id="producto" placeholder="Radio, Notebook, etc..."></div>
     <div class="field"><label>Responsable</label><input type="text" id="responsable" placeholder="Nombre completo"></div>
     <div class="field"><label>Observaciones</label><textarea id="obs" rows="2"></textarea></div>
     <div class="field">
@@ -63,10 +63,10 @@
         <input type="text" id="busquedaId" style="flex:1; border-radius: 8px 0 0 8px; border:1px solid #ccc; padding:10px;" placeholder="Buscar ID...">
         <button class="btn btn-search" style="border-radius: 0 8px 8px 0; padding:10px 20px;" onclick="buscarIDB()">BUSCAR</button>
     </div>
-    <button id="btnWhatsApp" class="btn btn-wa" onclick="enviarWhatsApp()">COMPARTIR POR WHATSAPP 📱</button>
-    <button id="btnFinalizar" class="btn btn-save" onclick="finalizarProceso()">FINALIZAR Y REGISTRAR</button>
-    <button id="btnDevolver" class="btn" style="background:var(--purple); display:none;" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
-    <button class="btn" style="background:#7f8c8d;" onclick="nuevo()">LIMPIAR / NUEVO</button>
+    <button id="btnWhatsApp" class="btn btn-wa" onclick="enviarWhatsApp()">Enviar por WhatsApp 📱</button>
+    <button id="btnFinalizar" class="btn btn-save" onclick="finalizarProceso()">Finalizar y Registrar</button>
+    <button id="btnDevolver" class="btn" style="background:var(--purple); display:none;" onclick="devolverIDB()">Registrar Devolución</button>
+    <button class="btn" style="background:#7f8c8d;" onclick="nuevo()">Limpiar / Nuevo</button>
 </div>
 
 <script>
@@ -75,16 +75,13 @@
     const ctx = canvas.getContext('2d');
     let dibujando = false;
 
-    // MOTOR INDEXED DB
-    const request = indexedDB.open("AGA_DB_FINAL", 1);
+    // 1. MOTOR INDEXED DB - CONEXIÓN ROBUSTA
+    const request = indexedDB.open("AGA_DB_FIXED", 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
         db.createObjectStore("vales", { keyPath: "id" });
     };
-    request.onsuccess = (e) => { 
-        db = e.target.result; 
-        nuevo(); 
-    };
+    request.onsuccess = (e) => { db = e.target.result; nuevo(); };
 
     function nuevo() {
         document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
@@ -100,7 +97,6 @@
         
         document.getElementById('btnFinalizar').style.display = "block";
         document.getElementById('btnDevolver').style.display = "none";
-        document.getElementById('btnWhatsApp').style.display = "none"; // Oculto al inicio
         
         limpiarCanvas();
         ajustarCanvas();
@@ -126,45 +122,10 @@
 
     function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-    // FLUJO DE GUARDADO Y LIMPIEZA
-    function finalizarProceso() {
-        if(!document.getElementById('producto').value || !document.getElementById('responsable').value) {
-            alert("⚠️ Complete Producto y Responsable"); return;
-        }
-
-        const st = document.getElementById('statusTxt');
-        st.className = "status status-registrado";
-        st.innerText = "Estado: En Custodia (Registrado)";
-
-        const vale = {
-            id: document.getElementById('idVale').value,
-            fecha: document.getElementById('fecha').value,
-            producto: document.getElementById('producto').value,
-            responsable: document.getElementById('responsable').value,
-            obs: document.getElementById('obs').value,
-            firma: canvas.toDataURL(),
-            estado: "REGISTRADO"
-        };
-
-        const tx = db.transaction("vales", "readwrite");
-        tx.objectStore("vales").put(vale);
-
-        tx.oncomplete = () => {
-            // Muestra WhatsApp antes de imprimir por si acaso
-            document.getElementById('btnWhatsApp').style.display = "block";
-            window.print();
-            
-            setTimeout(() => {
-                alert("Registro Exitoso. Enviando datos a WhatsApp...");
-                enviarWhatsApp(); // Dispara WhatsApp automáticamente
-                nuevo();
-            }, 1000);
-        };
-    }
-
-    // BUSQUEDA
+    // 2. BUSCADOR REPARADO - Llama registros y activa WhatsApp
     function buscarIDB() {
         const id = document.getElementById('busquedaId').value.trim();
+        if(!id) return;
         const tx = db.transaction("vales", "readonly");
         const store = tx.objectStore("vales");
         const req = store.get(id);
@@ -190,8 +151,36 @@
                     document.getElementById('btnDevolver').style.display = "block";
                 }
                 document.getElementById('btnFinalizar').style.display = "none";
-                document.getElementById('btnWhatsApp').style.display = "block"; // Se activa en búsqueda
             } else { alert("ID no encontrado."); }
+        };
+    }
+
+    // 3. FINALIZAR Y LIMPIAR - Repara el ciclo del PDF
+    function finalizarProceso() {
+        if(!document.getElementById('producto').value) return alert("Falta Producto");
+        
+        const st = document.getElementById('statusTxt');
+        st.className = "status status-registrado";
+        st.innerText = "Estado: En Custodia (Registrado)";
+
+        const vale = {
+            id: document.getElementById('idVale').value,
+            fecha: document.getElementById('fecha').value,
+            producto: document.getElementById('producto').value,
+            responsable: document.getElementById('responsable').value,
+            obs: document.getElementById('obs').value,
+            firma: canvas.toDataURL(),
+            estado: "REGISTRADO"
+        };
+
+        const tx = db.transaction("vales", "readwrite");
+        tx.objectStore("vales").put(vale);
+
+        tx.oncomplete = () => {
+            setTimeout(() => { 
+                window.print(); // Dispara PDF
+                setTimeout(() => { nuevo(); }, 1500); // Limpia tras PDF
+            }, 500);
         };
     }
 
@@ -204,23 +193,21 @@
         req.onsuccess = () => {
             const data = req.result;
             data.estado = "DEVUELTO";
-            data.fecha = "Devuelto: " + new Date().toLocaleString();
+            data.fecha = "Cerrado: " + new Date().toLocaleString();
             store.put(data);
 
-            document.getElementById('statusTxt').className = "status status-devuelto";
-            document.getElementById('statusTxt').innerText = "Estado: Devolución Completada";
+            const st = document.getElementById('statusTxt');
+            st.className = "status status-devuelto";
+            st.innerText = "Estado: Devolución Completada";
             document.getElementById('fecha').value = data.fecha;
 
-            window.print();
             setTimeout(() => { 
-                alert("Ciclo Cerrado.");
-                enviarWhatsApp();
-                nuevo(); 
-            }, 1000);
+                window.print(); 
+                setTimeout(() => { nuevo(); }, 1500);
+            }, 500);
         };
     }
 
-    // FUNCIÓN WHATSAPP DINÁMICA
     function enviarWhatsApp() {
         const id = document.getElementById('idVale').value;
         const prod = document.getElementById('producto').value;
