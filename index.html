@@ -4,148 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AGA PROTOCOLO | TOTIS.CL MASTER</title>
-
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --blue:   #1a3a5a;
-            --green:  #27ae60;
+            --blue: #1a3a5a;
+            --green: #27ae60;
             --yellow: #f1c40f;
-            --red:    #e74c3c;
-            --gray:   #f4f7f6;
+            --red: #e74c3c;
+            --gray: #f4f7f6;
             --purple: #8e44ad;
-            /* MEJORA S25: Gestión de área segura para bordes físicos y barra de gestos */
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
-
-        body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            background: #d0d7de; 
-            padding: calc(var(--safe-top) + 10px) 10px 10px 10px; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        #printableArea {
-            background: white;
-            width: 100%;
-            max-width: 500px;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            box-sizing: border-box;
-            border: 1px solid #bdc3c7;
-        }
-
-        .header-title { text-align: center; color: var(--blue); margin: 0 0 20px 0; font-size: 1.4em; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid var(--blue); padding-bottom: 10px; }
-
-        .status-box {
-            text-align: center;
-            font-weight: bold;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            font-size: 15px;
-            text-transform: uppercase;
-            /* REGLA 2: Obligatorio para renderizado PDF en Android Chrome */
-            border: 4px solid #000 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        .status-emision    { background-color: var(--yellow) !important; color: #000 !important; }
-        .status-registrado { background-color: var(--red)    !important; color: #fff !important; }
-        .status-devuelto   { background-color: var(--green)  !important; color: #fff !important; }
-
-        .section-box { background: var(--gray); padding: 15px; border-radius: 15px; border: 1px solid #ddd; margin-bottom: 15px; }
-        .section-title { font-size: 11px; font-weight: bold; color: var(--blue); text-transform: uppercase; margin-bottom: 8px; display: block; border-left: 4px solid var(--blue); padding-left: 8px; }
-
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; background: #fff; }
-        input[readonly] { background: #e9ecef; font-weight: bold; color: var(--blue); border: none; }
-
-        #sig-wrap { background: #fff; border: 2px dashed var(--blue); border-radius: 12px; height: 180px; position: relative; margin-top: 5px; overflow: hidden; }
-        canvas { width: 100%; height: 100%; touch-action: none; display: block; }
-
-        .no-print { 
-            width: 100%; 
-            max-width: 500px; 
-            margin-top: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            /* MEJORA S25: Padding dinámico inferior */
-            padding-bottom: calc(var(--safe-bottom) + 15px); 
-        }
-        
-        .btn { padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; color: white; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-search  { background: var(--blue); }
-        .btn-save    { background: var(--green); }
-        .btn-wa      { background: #25d366; }
-        .btn-devolver{ background: var(--purple); }
-        .btn-gris    { background: #7f8c8d; }
-
-        .admin-zone { 
-            display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid #bdc3c7; padding-top: 10px;
-        }
-        .btn-admin { flex: 1; padding: 10px; font-size: 10px; background: #34495e; color: white; border-radius: 8px; border: none; font-weight: bold; }
-
+        body { background: #d0d7de; padding: calc(var(--safe-top) + 10px) 10px 10px 10px; }
+        .status-box { border: 4px solid #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         @media print {
             .no-print { display: none !important; }
             body { background: white; padding: 0; }
             #printableArea { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
+            #canvas { display: none !important; }
+            #signatureImage { display: block !important; width: 100%; height: 100%; object-fit: contain; }
         }
+        #signatureImage { display: none; }
     </style>
 </head>
-<body>
+<body class="flex flex-col items-center min-h-screen font-sans">
 
-<div id="printableArea">
-    <div class="header-title">PROTOCOLOS AGA</div>
-    <div id="statusTxt" class="status-box status-emision">ESTADO: EN EMISIÓN</div>
+<div id="printableArea" class="bg-white w-full max-w-[500px] p-6 rounded-3xl shadow-2xl border border-slate-300 box-border">
+    <div class="text-center text-[#1a3a5a] mb-5 text-2xl font-bold uppercase border-b-2 border-[#1a3a5a] pb-2">PROTOCOLOS AGA</div>
+    <div id="statusTxt" class="status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#f1c40f] text-black">ESTADO: EN EMISIÓN</div>
 
-    <div class="section-box">
-        <span class="section-title">Identificación del Documento</span>
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;"><label style="font-size: 10px;">ID FOLIO</label><input type="text" id="idVale" readonly></div>
-            <div style="flex: 1;"><label style="font-size: 10px;">FECHA</label><input type="text" id="fecha" readonly></div>
+    <div class="bg-[#f4f7f6] p-4 rounded-2xl border border-slate-200 mb-4">
+        <span class="text-[11px] font-bold text-[#1a3a5a] uppercase mb-2 block border-l-4 border-[#1a3a5a] pl-2">Identificación del Documento</span>
+        <div class="flex gap-2">
+            <div class="flex-1"><label class="text-[10px] block">ID FOLIO</label><input type="text" id="idVale" readonly class="w-full p-2 border-none bg-[#e9ecef] font-bold text-[#1a3a5a] rounded-lg"></div>
+            <div class="flex-1"><label class="text-[10px] block">FECHA</label><input type="text" id="fecha" readonly class="w-full p-2 border-none bg-[#e9ecef] font-bold text-[#1a3a5a] rounded-lg"></div>
         </div>
     </div>
 
-    <div class="section-box">
-        <span class="section-title">Detalles del Cargo</span>
-        <label style="font-size: 10px;">EQUIPO (BMI)</label>
-        <input type="text" id="producto" placeholder="Nombre del equipo">
-        <label style="font-size: 10px; margin-top: 10px; display: block;">RESPONSABLE</label>
-        <input type="text" id="responsable" placeholder="Grado y Nombre completo">
+    <div class="bg-[#f4f7f6] p-4 rounded-2xl border border-slate-200 mb-4">
+        <span class="text-[11px] font-bold text-[#1a3a5a] uppercase mb-2 block border-l-4 border-[#1a3a5a] pl-2">Detalles del Cargo</span>
+        <label class="text-[10px] block">EQUIPO (BMI)</label>
+        <input type="text" id="producto" placeholder="Nombre del equipo" class="w-full p-3 border border-slate-300 rounded-lg text-sm mb-3">
+        <label class="text-[10px] block">RESPONSABLE</label>
+        <input type="text" id="responsable" placeholder="Grado y Nombre completo" class="w-full p-3 border border-slate-300 rounded-lg text-sm">
     </div>
 
-    <div class="section-box">
-        <span class="section-title">Observaciones</span>
-        <textarea id="obs" rows="2" placeholder="Notas adicionales..."></textarea>
+    <div class="bg-[#f4f7f6] p-4 rounded-2xl border border-slate-200 mb-4">
+        <span class="text-[11px] font-bold text-[#1a3a5a] uppercase mb-2 block border-l-4 border-[#1a3a5a] pl-2">Observaciones</span>
+        <textarea id="obs" rows="2" placeholder="Notas adicionales..." class="w-full p-3 border border-slate-300 rounded-lg text-sm resize-none"></textarea>
     </div>
 
-    <div class="section-box">
-        <span class="section-title">Firma de Responsabilidad</span>
-        <div id="sig-wrap"><canvas id="canvas"></canvas></div>
-        <button class="no-print" style="background:none; border:none; color:var(--red); font-size:11px; cursor:pointer; width:100%; text-align:right;" onclick="limpiarCanvas()">[ BORRAR FIRMA ]</button>
+    <div class="bg-[#f4f7f6] p-4 rounded-2xl border border-slate-200 mb-4">
+        <span class="text-[11px] font-bold text-[#1a3a5a] uppercase mb-2 block border-l-4 border-[#1a3a5a] pl-2">Firma de Responsabilidad</span>
+        <div id="sig-wrap" class="bg-white border-2 border-dashed border-[#1a3a5a] rounded-xl h-[180px] relative overflow-hidden">
+            <canvas id="canvas" class="w-full h-full touch-none block"></canvas>
+            <img id="signatureImage" alt="Firma">
+        </div>
+        <button class="no-print w-full text-right text-red-500 text-[11px] mt-2 font-bold uppercase" onclick="limpiarCanvas()">[ BORRAR FIRMA ]</button>
     </div>
 </div>
 
-<div class="no-print">
-    <div style="display:flex; gap:5px;">
-        <input type="text" id="busquedaId" style="flex:1;" placeholder="Folio a buscar...">
-        <button class="btn btn-search" style="padding:10px 20px;" onclick="buscarIDB()">BUSCAR</button>
+<div class="no-print w-full max-w-[500px] mt-5 flex flex-col gap-3 pb-10">
+    <div class="flex gap-2">
+        <input type="text" id="busquedaId" class="flex-1 p-3 border border-slate-300 rounded-xl text-sm" placeholder="Folio a buscar...">
+        <button class="bg-[#1a3a5a] text-white px-6 py-3 rounded-xl font-bold text-sm" onclick="buscarIDB()">BUSCAR</button>
     </div>
-    <button class="btn btn-wa" onclick="enviarWhatsApp()">WhatsApp 📱</button>
-    <button id="btnFinalizar" class="btn btn-save" onclick="finalizarProceso()">FINALIZAR Y REGISTRAR</button>
-    <button id="btnDevolver" class="btn btn-devolver" style="display:none;" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
-    <button class="btn btn-gris" onclick="nuevo()">NUEVO PROCEDIMIENTO</button>
+    <button class="bg-[#25d366] text-white p-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2" onclick="enviarWhatsApp()">WhatsApp 📱</button>
+    <button id="btnFinalizar" class="bg-[#27ae60] text-white p-4 rounded-xl font-bold text-sm" onclick="finalizarProceso()">FINALIZAR Y REGISTRAR</button>
+    <button id="btnDevolver" class="bg-[#8e44ad] text-white p-4 rounded-xl font-bold text-sm hidden" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
+    <button class="bg-[#7f8c8d] text-white p-4 rounded-xl font-bold text-sm" onclick="nuevo()">NUEVO PROCEDIMIENTO</button>
 
-    <div class="admin-zone">
-        <button class="btn-admin" onclick="exportarJSON()">EXPORTAR DB</button>
-        <button class="btn-admin" onclick="document.getElementById('inputImport').click()">IMPORTAR DB</button>
-        <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarJSON(event)">
+    <div class="flex gap-2 mt-4 pt-4 border-t border-slate-300">
+        <button class="flex-1 bg-[#34495e] text-white p-3 rounded-lg font-bold text-[10px]" onclick="exportarJSON()">EXPORTAR DB</button>
+        <button class="flex-1 bg-[#34495e] text-white p-3 rounded-lg font-bold text-[10px]" onclick="document.getElementById('inputImport').click()">IMPORTAR DB</button>
+        <input type="file" id="inputImport" class="hidden" accept=".json" onchange="importarJSON(event)">
     </div>
 </div>
 
@@ -155,20 +88,16 @@
     const ctx = canvas.getContext('2d');
     let dibujando = false;
 
-    // REGLA 1: Persistencia Exclusiva IndexedDB
     const request = indexedDB.open("AGA_DB_PROFESSIONAL", 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
         if(!db.objectStoreNames.contains("vales")) db.createObjectStore("vales", { keyPath: "id" });
     };
     request.onsuccess = (e) => { db = e.target.result; nuevo(); };
-    request.onerror = () => alert("Error crítico de IndexedDB.");
 
-    // REGLA 4: Manejo de Canvas
     function ajustarCanvas() {
         const wrap = document.getElementById('sig-wrap');
         const rect = wrap.getBoundingClientRect();
-        if (rect.width === 0) return;
         canvas.width = rect.width; canvas.height = rect.height;
         ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
     }
@@ -188,19 +117,17 @@
     canvas.addEventListener('mousedown', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     canvas.addEventListener('mousemove', (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
     window.addEventListener('mouseup', () => dibujando = false);
-
     window.addEventListener('resize', () => { setTimeout(ajustarCanvas, 200); });
 
-    // REGLA 3: Flujo de Estados
     function nuevo() {
         document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
         document.getElementById('fecha').value = new Date().toLocaleDateString('es-CL');
         document.getElementById('producto').value = "";
         document.getElementById('responsable').value = "";
         document.getElementById('obs').value = "";
-        document.getElementById('busquedaId').value = "";
         const st = document.getElementById('statusTxt');
-        st.className = "status-box status-emision"; st.innerText = "ESTADO: EN EMISIÓN";
+        st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#f1c40f] text-black";
+        st.innerText = "ESTADO: EN EMISIÓN";
         document.getElementById('btnFinalizar').style.display = "block";
         document.getElementById('btnDevolver').style.display = "none";
         limpiarCanvas(); 
@@ -208,7 +135,6 @@
     }
 
     function buscarIDB() {
-        if (!db) return;
         const id = document.getElementById('busquedaId').value.trim();
         if (!id) return alert("Ingrese Folio.");
         const tx = db.transaction("vales", "readonly");
@@ -220,21 +146,20 @@
             document.getElementById('producto').value = r.producto;
             document.getElementById('responsable').value = r.responsable;
             document.getElementById('obs').value = r.obs;
-            
-            ajustarCanvas();
             if (r.firma) {
                 const img = new Image();
                 img.onload = () => { limpiarCanvas(); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
                 img.src = r.firma;
             }
-
             const st = document.getElementById('statusTxt');
             if (r.estado === "DEVUELTO") {
-                st.className = "status-box status-devuelto"; st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
+                st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#27ae60] text-white";
+                st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
                 document.getElementById('btnDevolver').style.display = "none";
                 document.getElementById('btnFinalizar').style.display = "none";
             } else {
-                st.className = "status-box status-registrado"; st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
+                st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#e74c3c] text-white";
+                st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
                 document.getElementById('btnDevolver').style.display = "block";
                 document.getElementById('btnFinalizar').style.display = "none";
             }
@@ -242,66 +167,52 @@
     }
 
     function finalizarProceso() {
-        if (!db) return;
         if (!document.getElementById('producto').value || !document.getElementById('responsable').value) return alert("Faltan datos.");
-        
+        const firmaData = canvas.toDataURL();
         const vale = {
             id: document.getElementById('idVale').value,
             fecha: document.getElementById('fecha').value,
             producto: document.getElementById('producto').value,
             responsable: document.getElementById('responsable').value,
             obs: document.getElementById('obs').value,
-            firma: canvas.toDataURL(),
+            firma: firmaData,
             estado: "REGISTRADO"
         };
-
         const tx = db.transaction("vales", "readwrite");
         tx.objectStore("vales").put(vale);
         tx.oncomplete = () => {
-            document.getElementById('statusTxt').className = "status-box status-registrado";
+            document.getElementById('signatureImage').src = firmaData;
             document.getElementById('statusTxt').innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
-            document.getElementById('btnFinalizar').style.display = "none";
-            document.getElementById('btnDevolver').style.display = "block";
-            // REGLA 2: Timeout antes de imprimir
-            setTimeout(() => { window.print(); }, 1000);
+            document.getElementById('statusTxt').className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#e74c3c] text-white";
+            setTimeout(() => { window.print(); }, 500);
         };
     }
 
     function devolverIDB() {
-        if (!db) return;
         const id = document.getElementById('idVale').value;
         const tx = db.transaction("vales", "readwrite");
         const store = tx.objectStore("vales");
         store.get(id).onsuccess = (e) => {
             const data = e.target.result;
-            if (!data) return;
             data.estado = "DEVUELTO";
             data.fecha = new Date().toLocaleDateString('es-CL') + " (Devuelto)";
             store.put(data);
             tx.oncomplete = () => {
-                document.getElementById('statusTxt').className = "status-box status-devuelto";
                 document.getElementById('statusTxt').innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
-                document.getElementById('fecha').value = data.fecha;
-                document.getElementById('btnDevolver').style.display = "none";
-                setTimeout(() => { window.print(); }, 1000);
+                document.getElementById('statusTxt').className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#27ae60] text-white";
+                setTimeout(() => { window.print(); }, 500);
             };
         };
     }
 
-    // REGLA 5: WhatsApp
     function enviarWhatsApp() {
         const id = document.getElementById('idVale').value;
-        const prod = document.getElementById('producto').value;
-        const resp = document.getElementById('responsable').value;
-        const est = document.getElementById('statusTxt').innerText;
-        const msg = `*AGA PROTOCOLO*%0A*ID:* ${id}%0A*Equipo:* ${prod}%0A*Responsable:* ${resp}%0A*${est}*`;
+        const msg = `*AGA PROTOCOLO*%0A*ID:* ${id}%0A*Estado:* ${document.getElementById('statusTxt').innerText}`;
         window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
 
-    // GESTIÓN DE BACKUPS
     function exportarJSON() {
-        const tx = db.transaction("vales", "readonly");
-        tx.objectStore("vales").getAll().onsuccess = (e) => {
+        db.transaction("vales", "readonly").objectStore("vales").getAll().onsuccess = (e) => {
             const blob = new Blob([JSON.stringify(e.target.result, null, 2)], {type: "application/json"});
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
@@ -312,27 +223,14 @@
 
     function importarJSON(event) {
         const file = event.target.files[0];
-        if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                const tx = db.transaction("vales", "readwrite");
-                const store = tx.objectStore("vales");
-                data.forEach(item => store.put(item));
-                tx.oncomplete = () => { alert("Base de datos importada."); location.reload(); };
-            } catch (err) { alert("JSON no válido."); }
+            const data = JSON.parse(e.target.result);
+            const tx = db.transaction("vales", "readwrite");
+            data.forEach(item => tx.objectStore("vales").put(item));
+            tx.oncomplete = () => { alert("Importado."); location.reload(); };
         };
         reader.readAsText(file);
-    }
-
-    // REGISTRO DE SERVICE WORKER PARA MODO OFFLINE
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registrado con éxito'))
-                .catch(err => console.log('Error al registrar SW', err));
-        });
     }
 </script>
 </body>
