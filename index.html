@@ -4,63 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Protocolo Fach | AGA</title>
-    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icono.png">
-
+    
     <style>
         :root { --primary: #2c3e50; --success: #27ae60; --danger: #e74c3c; --info: #3498db; --purple: #9b59b6; }
-        body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; justify-content: center; margin: 0; -webkit-tap-highlight-color: transparent; }
-        
-        .vale-card { 
-            background: white; width: 100%; max-width: 500px; 
-            padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-top: 8px solid var(--primary); box-sizing: border-box;
-        }
-
-        h2 { text-align: center; color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; text-transform: uppercase; }
-        .status-badge { text-align: center; font-weight: bold; padding: 10px; border-radius: 4px; margin-bottom: 15px; background: #f1c40f; font-size: 14px; color: #000; border: 1px solid #d4ac0d; }
-
+        body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; justify-content: center; margin: 0; }
+        .vale-card { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 8px solid var(--primary); box-sizing: border-box; }
+        h2 { text-align: center; color: var(--primary); margin: 0 0 15px 0; font-size: 1.4em; }
+        .status-badge { text-align: center; font-weight: bold; padding: 10px; border-radius: 4px; margin-bottom: 15px; background: #f1c40f; font-size: 14px; border: 1px solid #d4ac0d; }
         .search-box { display: flex; gap: 5px; margin-bottom: 15px; background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #dee2e6; }
         .search-box input { flex-grow: 1; padding: 10px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; }
-        .btn-search { background: var(--info); color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; }
-
         .section { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #34495e; text-transform: uppercase; }
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; font-size: 15px; background: #fff; color: #000; }
-        
-        /* Estilo agresivo para campos de lectura */
-        input[readonly] { background-color: #e9ecef !important; color: #2c3e50 !important; font-weight: 800 !important; border: 1px solid #ced4da; }
-
-        #signature-pad { border: 2px dashed #34495e; background: #fff; cursor: crosshair; touch-action: none; width: 100%; height: 200px; border-radius: 8px; }
-        .signature-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-        
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 12px; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-save { background: var(--success); color: white; box-shadow: 0 4px #1e8449; }
-        .btn-save:active { box-shadow: 0 0; transform: translateY(4px); }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #34495e; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; font-size: 15px; color: #000; }
+        input[readonly] { background-color: #e9ecef !important; color: #2c3e50 !important; font-weight: bold !important; }
+        #signature-pad { border: 2px dashed #34495e; background: #fff; touch-action: none; width: 100%; height: 200px; border-radius: 8px; }
+        .signature-controls { display: flex; justify-content: space-between; margin-top: 8px; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; text-transform: uppercase; }
+        .btn-save { background: var(--success); color: white; }
         .btn-return { background: var(--danger); color: white; display: none; }
         .btn-print-dev { background: var(--purple); color: white; display: none; }
-        .btn-clear { background: #95a5a6; color: white; font-size: 12px; padding: 8px 15px; border: none; border-radius: 4px; }
+        .btn-clear { background: #95a5a6; color: white; padding: 8px 15px; border-radius: 4px; border: none; }
+        #imgFirmaFinal { display: none; width: 100%; border: 1px solid #ccc; }
 
         @media print {
             .btn, .btn-clear, .signature-controls, .search-box, .status-badge { display: none !important; }
+            #signature-pad { display: none !important; }
+            #imgFirmaFinal { display: block !important; }
             body { background: white; padding: 0; }
-            .vale-card { box-shadow: none; border: 1px solid #000; width: 100%; max-width: 100%; padding: 10px; }
-            input, textarea { border: none; border-bottom: 1px solid #000; border-radius: 0; }
+            .vale-card { box-shadow: none; border: 1px solid #000; width: 100%; max-width: 100%; }
         }
     </style>
 </head>
-<body>
+<body onload="forzarArranque()">
 
-<div class="vale-card">
+<div class="vale-card" id="app">
     <h2>AGA: VALE DE ENTREGA</h2>
     
     <div class="search-box">
-        <input type="text" id="inputBuscar" placeholder="ID (Ej: AGA-2026-1234)">
-        <button class="btn-search" onclick="buscarVale()">BUSCAR</button>
+        <input type="text" id="inputBuscar" placeholder="ID (AGA-2026-XXXX)">
+        <button onclick="buscarVale()" style="background:var(--info); color:white; border:none; padding:10px; border-radius:4px; font-weight:bold;">BUSCAR</button>
     </div>
 
     <div id="statusLabel" class="status-badge">ESTADO: EN EMISIÓN</div>
@@ -87,60 +72,41 @@
 
     <div class="section">
         <label>Observación Técnica</label>
-        <textarea id="observaciones" rows="3" placeholder="Indicar estado de recepción..."></textarea> 
+        <textarea id="observaciones" rows="3"></textarea> 
     </div>
 
     <div class="section">
         <label>Firma de Responsabilidad</label>
         <canvas id="signature-pad"></canvas>
+        <img id="imgFirmaFinal">
         <div class="signature-controls">
-            <span style="font-size: 10px; color: #7f8c8d;">Firmar sobre la línea punteada</span>
             <button class="btn-clear" onclick="clearSignature()">BORRAR</button>
         </div>
     </div>
 
     <button id="btnFinalizar" class="btn btn-save" onclick="finalizarEntrega()">FINALIZAR Y REGISTRAR</button>
-    <button id="btnDevolver" class="btn btn-return" onclick="registrarRetorno()">REGISTRAR DEVOLUCIÓN (CERRAR)</button>
-    <button id="btnImprimirDevuelto" class="btn btn-print-dev" onclick="imprimirActa()">IMPRIMIR ACTA DE DEVOLUCIÓN</button>
+    <button id="btnDevolver" class="btn btn-return" onclick="registrarRetorno()">REGISTRAR DEVOLUCIÓN</button>
+    <button id="btnImprimirDevuelto" class="btn btn-print-dev" onclick="window.print()">IMPRIMIR ACTA</button>
 </div>
 
 <script>
-    // MOTOR AGRESIVO DE CARGA
-    function ejecutarArranque() {
-        // 1. Generar ID
-        const idCampo = document.getElementById('idVale');
-        if (!idCampo.value) {
-            idCampo.value = "AGA-2026-" + Math.floor(Math.random() * 9000 + 1000);
-        }
-
-        // 2. Generar Fecha
-        const fechaCampo = document.getElementById('fechaAuto');
-        if (!fechaCampo.value) {
-            const hoy = new Date();
-            fechaCampo.value = hoy.toLocaleDateString() + " " + hoy.toLocaleTimeString();
-        }
-
-        // 3. Preparar Lienzo
-        resizeCanvas();
-    }
-
-    // Disparadores múltiples para asegurar ejecución en S25
-    window.addEventListener('load', ejecutarArranque);
-    document.addEventListener('DOMContentLoaded', ejecutarArranque);
-    setTimeout(ejecutarArranque, 500); // Refuerzo por si el navegador es lento
-
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
     let drawing = false;
 
+    function forzarArranque() {
+        document.getElementById('idVale').value = "AGA-2026-" + Math.floor(Math.random() * 9000 + 1000);
+        const hoy = new Date();
+        document.getElementById('fechaAuto').value = hoy.toLocaleDateString() + " " + hoy.toLocaleTimeString();
+        resizeCanvas();
+    }
+
     function resizeCanvas() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const ratio = window.devicePixelRatio || 1;
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         ctx.scale(ratio, ratio);
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#2c3e50';
     }
 
     function getPos(e) {
@@ -150,112 +116,68 @@
         return { x: clientX - rect.left, y: clientY - rect.top };
     }
 
-    function startDrawing(e) { 
-        drawing = true; 
-        const pos = getPos(e); 
-        ctx.beginPath(); 
-        ctx.moveTo(pos.x, pos.y); 
-    }
-
-    function draw(e) {
-        if (!drawing) return;
-        if (e.cancelable) e.preventDefault();
-        const pos = getPos(e);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-    }
-
-    function stopDrawing() { drawing = false; }
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    window.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing, {passive: false});
-    canvas.addEventListener('touchmove', draw, {passive: false});
-    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchstart', (e) => { drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => { if (!drawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchend', () => drawing = false);
 
     function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
+    function finalizarEntrega() {
+        if(!document.getElementById('producto').value || !document.getElementById('cliente').value) return alert("Complete los datos");
+        
+        // CONVERSIÓN CRÍTICA PARA S25
+        const dataURL = canvas.toDataURL();
+        document.getElementById('imgFirmaFinal').src = dataURL;
+        
+        const registro = {
+            id: document.getElementById('idVale').value,
+            fecha: document.getElementById('fechaAuto').value,
+            producto: document.getElementById('producto').value,
+            cliente: document.getElementById('cliente').value,
+            observacion: document.getElementById('observaciones').value,
+            firma: dataURL,
+            estado: "REGISTRADO"
+        };
+
+        let registros = JSON.parse(localStorage.getItem('vales_aga')) || [];
+        registros.push(registro);
+        localStorage.setItem('vales_aga', JSON.stringify(registros));
+
+        document.title = "Vale_" + registro.id;
+        window.print();
+        setTimeout(() => location.reload(), 1500);
+    }
+
     function buscarVale() {
-        const idBusqueda = document.getElementById('inputBuscar').value.trim();
-        if (!idBusqueda) return alert("Ingrese un ID para buscar");
-
+        const id = document.getElementById('inputBuscar').value;
         const registros = JSON.parse(localStorage.getItem('vales_aga')) || [];
-        const vale = registros.find(v => v.id === idBusqueda);
-
-        if (vale) {
-            document.getElementById('idVale').value = vale.id;
-            document.getElementById('fechaAuto').value = vale.fecha;
-            document.getElementById('producto').value = vale.producto;
-            document.getElementById('cliente').value = vale.cliente;
-            document.getElementById('observaciones').value = vale.observacion;
-            
-            const img = new Image();
-            img.src = vale.firma;
-            img.onload = () => { 
-                clearSignature(); 
-                ctx.drawImage(img, 0, 0, canvas.offsetWidth, canvas.offsetHeight); 
-            };
-
-            const status = document.getElementById('statusLabel');
-            if (vale.estado === "DEVUELTO") {
-                status.innerText = "ESTADO: DEVUELTO";
-                status.style.background = "#27ae60";
-                status.style.color = "white";
-                document.getElementById('btnDevolver').style.display = "none";
-                document.getElementById('btnFinalizar').style.display = "none";
-                document.getElementById('btnImprimirDevuelto').style.display = "block";
-            } else {
-                status.innerText = "ESTADO: REGISTRADO";
-                status.style.background = "#e74c3c"; 
-                status.style.color = "white";
-                document.getElementById('btnDevolver').style.display = "block";
-                document.getElementById('btnFinalizar').style.display = "none";
-                document.getElementById('btnImprimirDevuelto').style.display = "none";
-            }
-        } else { alert("❌ Registro no encontrado."); }
+        const v = registros.find(r => r.id === id);
+        if(v) {
+            document.getElementById('idVale').value = v.id;
+            document.getElementById('fechaAuto').value = v.fecha;
+            document.getElementById('producto').value = v.producto;
+            document.getElementById('cliente').value = v.cliente;
+            document.getElementById('observaciones').value = v.observacion;
+            document.getElementById('imgFirmaFinal').src = v.firma;
+            document.getElementById('statusLabel').innerText = "ESTADO: " + v.estado;
+            document.getElementById('statusLabel').style.background = v.estado === "DEVUELTO" ? "#27ae60" : "#e74c3c";
+            document.getElementById('statusLabel').style.color = "white";
+            document.getElementById('btnFinalizar').style.display = "none";
+            document.getElementById('btnDevolver').style.display = v.estado === "DEVUELTO" ? "none" : "block";
+            document.getElementById('btnImprimirDevuelto').style.display = v.estado === "DEVUELTO" ? "block" : "none";
+        } else { alert("No encontrado"); }
     }
 
     function registrarRetorno() {
         const id = document.getElementById('idVale').value;
         let registros = JSON.parse(localStorage.getItem('vales_aga')) || [];
-        const idx = registros.findIndex(v => v.id === id);
-        if (idx !== -1) {
+        const idx = registros.findIndex(r => r.id === id);
+        if(idx !== -1) {
             registros[idx].estado = "DEVUELTO";
             localStorage.setItem('vales_aga', JSON.stringify(registros));
-            alert("✅ Devolución Registrada con Éxito.");
+            alert("Devolución Guardada");
             location.reload();
         }
-    }
-
-    function finalizarEntrega() {
-        const prod = document.getElementById('producto').value;
-        const cli = document.getElementById('cliente').value;
-        
-        if(!prod || !cli) return alert("⚠️ Debe completar Producto y Responsable.");
-
-        const datos = {
-            id: document.getElementById('idVale').value,
-            fecha: document.getElementById('fechaAuto').value,
-            producto: prod,
-            cliente: cli,
-            observacion: document.getElementById('observaciones').value,
-            firma: canvas.toDataURL(),
-            estado: "REGISTRADO"
-        };
-        
-        let registros = JSON.parse(localStorage.getItem('vales_aga')) || [];
-        registros.push(datos);
-        localStorage.setItem('vales_aga', JSON.stringify(registros));
-        
-        document.title = "Vale_" + datos.id;
-        window.print();
-        setTimeout(() => location.reload(), 1000);
-    }
-
-    function imprimirActa() {
-        document.title = "Devolucion_" + document.getElementById('idVale').value;
-        window.print();
     }
 </script>
 </body>
