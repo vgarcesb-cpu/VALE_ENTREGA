@@ -32,7 +32,7 @@
         .section { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
         label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 4px; color: #34495e; }
         input, textarea { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; font-size: 14px; background: #fff; color: #000; }
-        input[readonly] { background-color: #f1f3f4; color: #555; border: 1px solid #dcdcdc; }
+        input[readonly] { background-color: #f1f3f4 !important; color: #222 !important; font-weight: bold; }
 
         #signature-pad { border: 2px dashed #bdc3c7; background: #fff; cursor: crosshair; touch-action: none; width: 100%; height: 180px; border-radius: 6px; }
         .signature-controls { display: flex; justify-content: flex-end; margin-top: 5px; }
@@ -50,7 +50,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="inicializar()">
 
 <div class="vale-card">
     <h2>AGA: VALE DE ENTREGA</h2>
@@ -64,12 +64,12 @@
 
     <div class="section">
         <label>ID de Transacción</label>
-        <input type="text" id="idVale" readonly>
+        <input type="text" id="idVale" readonly placeholder="Generando ID...">
     </div>
 
     <div class="section">
         <label>Fecha de Registro</label>
-        <input type="text" id="fechaAuto" readonly>
+        <input type="text" id="fechaAuto" readonly placeholder="Generando fecha...">
     </div>
 
     <div class="section">
@@ -101,12 +101,24 @@
 </div>
 
 <script>
+    // Forzamos la inicialización al cargar la ventana
     function inicializar() {
-        document.getElementById('idVale').value = "AGA-2026-" + Math.floor(Math.random()*9000 + 1000);
-        const hoy = new Date();
-        document.getElementById('fechaAuto').value = hoy.toLocaleString();
+        const idCampo = document.getElementById('idVale');
+        const fechaCampo = document.getElementById('fechaAuto');
+        
+        // Generar ID si está vacío
+        if (!idCampo.value || idCampo.value === "Generando ID...") {
+            idCampo.value = "AGA-2026-" + Math.floor(Math.random() * 9000 + 1000);
+        }
+        
+        // Generar Fecha si está vacía
+        if (!fechaCampo.value || fechaCampo.value === "Generando fecha...") {
+            const hoy = new Date();
+            fechaCampo.value = hoy.toLocaleDateString() + " " + hoy.toLocaleTimeString();
+        }
+        
+        resizeCanvas();
     }
-    inicializar();
 
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
@@ -118,8 +130,6 @@
         canvas.height = canvas.offsetHeight * ratio;
         ctx.scale(ratio, ratio);
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
 
     function getPos(e) {
         const rect = canvas.getBoundingClientRect();
@@ -161,18 +171,23 @@
             
             const img = new Image();
             img.src = vale.firma;
-            img.onload = () => { clearSignature(); ctx.drawImage(img, 0, 0, canvas.offsetWidth, canvas.offsetHeight); };
+            img.onload = () => { 
+                clearSignature(); 
+                ctx.drawImage(img, 0, 0, canvas.offsetWidth, canvas.offsetHeight); 
+            };
 
             const status = document.getElementById('statusLabel');
             if (vale.estado === "DEVUELTO") {
                 status.innerText = "ESTADO: DEVUELTO";
-                status.style.background = var(--success);
+                status.style.background = "#27ae60";
+                status.style.color = "white";
                 document.getElementById('btnDevolver').style.display = "none";
                 document.getElementById('btnFinalizar').style.display = "none";
                 document.getElementById('btnImprimirDevuelto').style.display = "block";
             } else {
                 status.innerText = "ESTADO: REGISTRADO";
-                status.style.background = "#e74c3c"; status.style.color = "white";
+                status.style.background = "#e74c3c"; 
+                status.style.color = "white";
                 document.getElementById('btnDevolver').style.display = "block";
                 document.getElementById('btnFinalizar').style.display = "none";
                 document.getElementById('btnImprimirDevuelto').style.display = "none";
@@ -210,7 +225,7 @@
         
         document.title = "Vale_" + datos.id;
         window.print();
-        setTimeout(() => location.reload(), 1000);
+        setTimeout(() => location.reload(), 1500);
     }
 
     function imprimirActa() {
@@ -218,9 +233,11 @@
         window.print();
     }
 
-    // Registro del Service Worker para PWA
+    // Registro automático del SW
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
     }
 </script>
 </body>
