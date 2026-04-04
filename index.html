@@ -3,47 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AGA | Motor IndexedDB</title>
+    <title>AGA | Protocolo Profesional</title>
     <style>
         :root { --blue: #2c3e50; --green: #27ae60; --yellow: #f1c40f; --red: #e74c3c; --purple: #8e44ad; --wa: #25d366; }
         body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        
         #printableArea { background: white; width: 100%; max-width: 480px; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 10px solid var(--blue); box-sizing: border-box; }
-        .status { text-align: center; font-weight: bold; padding: 12px; margin-bottom: 15px; border-radius: 6px; font-size: 14px; text-transform: uppercase; border: 2px solid rgba(0,0,0,0.05); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .status-emision { background-color: var(--yellow) !important; }
+        
+        .status { 
+            text-align: center; font-weight: bold; padding: 12px; margin-bottom: 15px; border-radius: 6px; 
+            font-size: 14px; text-transform: uppercase; border: 2px solid rgba(0,0,0,0.05);
+            -webkit-print-color-adjust: exact; print-color-adjust: exact; 
+        }
+        .status-emision { background-color: var(--yellow) !important; color: #000 !important; }
         .status-registrado { background-color: var(--red) !important; color: #fff !important; }
         .status-devuelto { background-color: var(--green) !important; color: #fff !important; }
+
         .field { margin-bottom: 10px; }
         label { display: block; font-size: 10px; font-weight: bold; color: var(--blue); margin-bottom: 3px; text-transform: uppercase; }
         input, textarea { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; font-size: 14px; color: #000; }
         input[readonly] { background: #f8f9fa; font-weight: bold; }
-        #sig-wrap { border: 2px dashed var(--blue); background: #fff; height: 160px; position: relative; }
-        canvas { width: 100%; height: 100%; touch-action: none; }
+
+        #sig-wrap { border: 2px dashed var(--blue); background: #fff; border-radius: 8px; height: 160px; position: relative; }
+        canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+        
         .no-print { width: 100%; max-width: 480px; margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; color: white; }
-        .btn-wa { background: var(--wa); display: none; } /* Botón WhatsApp */
-        @media print { .no-print { display: none !important; } body { padding: 0; } #printableArea { box-shadow: none; border: 1px solid #000; } }
+        .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; color: white; transition: 0.2s; }
+        .btn-search { background: var(--blue); }
+        .btn-save { background: var(--green); }
+        .btn-wa { background: var(--wa); display: none; }
+        .btn-return { background: var(--purple); display: none; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; background: white; }
+            #printableArea { box-shadow: none; border: 1px solid #000; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
 
 <div id="printableArea">
-    <h2 style="text-align:center; color:var(--blue);">PROTOCOLO AGA</h2>
+    <h2 style="text-align:center; color:var(--blue); margin-top:0;">PROTOCOLO AGA</h2>
     <div id="statusTxt" class="status status-emision">Estado: En Emisión</div>
+
     <div class="field"><label>ID Transacción</label><input type="text" id="idVale" readonly></div>
     <div class="field"><label>Fecha</label><input type="text" id="fecha" readonly></div>
-    <div class="field"><label>Equipo (BMI)</label><input type="text" id="producto"></div>
-    <div class="field"><label>Responsable</label><input type="text" id="responsable"></div>
+    <div class="field"><label>Equipo (BMI)</label><input type="text" id="producto" placeholder="Radio, Notebook, etc..."></div>
+    <div class="field"><label>Responsable</label><input type="text" id="responsable" placeholder="Nombre completo"></div>
     <div class="field"><label>Observaciones</label><textarea id="obs" rows="2"></textarea></div>
-    <div class="field"><label>Firma</label><div id="sig-wrap"><canvas id="canvas"></canvas></div></div>
+    <div class="field">
+        <label>Firma</label>
+        <div id="sig-wrap"><canvas id="canvas"></canvas></div>
+    </div>
 </div>
 
 <div class="no-print">
-    <div style="display:flex; gap:2px;">
-        <input type="text" id="busquedaId" style="flex:1;" placeholder="Buscar ID...">
-        <button class="btn" style="background:var(--blue); padding:10px 20px;" onclick="buscarIDB()">BUSCAR</button>
+    <div style="display:flex; gap:0;">
+        <input type="text" id="busquedaId" style="flex:1; border-radius: 8px 0 0 8px; border:1px solid #ccc; padding:10px;" placeholder="Ingresar ID...">
+        <button class="btn btn-search" style="border-radius: 0 8px 8px 0; padding:10px 20px;" onclick="buscarIDB()">BUSCAR</button>
     </div>
-    <button id="btnFinalizar" class="btn" style="background:var(--green);" onclick="guardarIDB()">Finalizar y Registrar</button>
-    <button id="btnDevolver" class="btn" style="background:var(--purple); display:none;" onclick="devolverIDB()">Cerrar Devolución</button>
+    <button id="btnFinalizar" class="btn btn-save" onclick="finalizarProceso()">Finalizar y Registrar</button>
+    <button id="btnDevolver" class="btn" style="background:var(--purple); display:none;" onclick="devolverIDB()">Registrar Devolución</button>
     <button id="btnWhatsApp" class="btn btn-wa" onclick="enviarWhatsApp()">Compartir por WhatsApp 📱</button>
     <button class="btn" style="background:#7f8c8d;" onclick="nuevo()">Limpiar / Nuevo</button>
 </div>
@@ -54,13 +75,16 @@
     const ctx = canvas.getContext('2d');
     let dibujando = false;
 
-    // 1. INICIALIZAR INDEXED DB
-    const request = indexedDB.open("AGA_Database", 1);
+    // 1. MOTOR INDEXED DB
+    const request = indexedDB.open("AGA_DB_PRO", 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
         db.createObjectStore("vales", { keyPath: "id" });
     };
-    request.onsuccess = (e) => { db = e.target.result; nuevo(); };
+    request.onsuccess = (e) => { 
+        db = e.target.result; 
+        nuevo(); 
+    };
 
     function nuevo() {
         document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
@@ -68,12 +92,17 @@
         document.getElementById('producto').value = "";
         document.getElementById('responsable').value = "";
         document.getElementById('obs').value = "";
-        document.getElementById('statusTxt').className = "status status-emision";
-        document.getElementById('statusTxt').innerText = "Estado: En Emisión";
+        document.getElementById('busquedaId').value = "";
+        
+        const st = document.getElementById('statusTxt');
+        st.className = "status status-emision";
+        st.innerText = "Estado: En Emisión";
+        
         document.getElementById('btnFinalizar').style.display = "block";
         document.getElementById('btnDevolver').style.display = "none";
         document.getElementById('btnWhatsApp').style.display = "none";
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        limpiarCanvas();
         ajustarCanvas();
     }
 
@@ -83,22 +112,34 @@
         ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
     }
 
-    // Dibujo (S25 + Mac)
-    const getP = (e) => {
+    const getPos = (e) => {
         const r = canvas.getBoundingClientRect();
         const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
         const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
         return {x, y};
     };
-    canvas.addEventListener('mousedown', (e) => { dibujando = true; const p = getP(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', (e) => { if(!dibujando) return; const p = getP(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('mousedown', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', (e) => { if(!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
     window.addEventListener('mouseup', () => dibujando = false);
-    canvas.addEventListener('touchstart', (e) => { dibujando = true; const p = getP(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, {passive:false});
-    canvas.addEventListener('touchmove', (e) => { if(!dibujando) return; const p = getP(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, {passive:false});
+    canvas.addEventListener('touchstart', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, {passive:false});
+    canvas.addEventListener('touchmove', (e) => { if(!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, {passive:false});
 
-    // 2. GUARDAR EN INDEXED DB
-    function guardarIDB() {
-        const val = {
+    function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // 2. FLUJO DE GUARDADO REPARADO
+    function finalizarProceso() {
+        if(!document.getElementById('producto').value || !document.getElementById('responsable').value) {
+            alert("⚠️ Falta Producto o Responsable");
+            return;
+        }
+
+        // A. CAMBIAR ESTADO VISUAL PRIMERO (Para el PDF)
+        const st = document.getElementById('statusTxt');
+        st.className = "status status-registrado";
+        st.innerText = "Estado: En Custodia (Registrado)";
+
+        // B. GUARDAR EN INDEXED DB
+        const vale = {
             id: document.getElementById('idVale').value,
             fecha: document.getElementById('fecha').value,
             producto: document.getElementById('producto').value,
@@ -107,21 +148,30 @@
             firma: canvas.toDataURL(),
             estado: "REGISTRADO"
         };
+
         const tx = db.transaction("vales", "readwrite");
-        tx.objectStore("vales").add(val);
+        const store = tx.objectStore("vales");
+        store.put(vale);
+
         tx.oncomplete = () => {
-            alert("Guardado en IndexedDB");
+            // C. DISPARAR IMPRESIÓN
             window.print();
-            document.getElementById('btnWhatsApp').style.display = "block";
+            
+            // D. LIMPIAR DESPUÉS DE CERRAR PDF
+            setTimeout(() => {
+                alert("Entrega Registrada. El sistema se limpiará para un nuevo vale.");
+                nuevo();
+            }, 1000);
         };
     }
 
-    // 3. BUSCAR EN INDEXED DB
+    // 3. BUSQUEDA
     function buscarIDB() {
         const id = document.getElementById('busquedaId').value.trim();
         const tx = db.transaction("vales", "readonly");
         const store = tx.objectStore("vales");
         const req = store.get(id);
+
         req.onsuccess = () => {
             const r = req.result;
             if(r) {
@@ -131,19 +181,20 @@
                 document.getElementById('responsable').value = r.responsable;
                 document.getElementById('obs').value = r.obs;
                 const img = new Image();
-                img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img, 0, 0); };
+                img.onload = () => { limpiarCanvas(); ctx.drawImage(img, 0, 0); };
                 img.src = r.firma;
+                
                 const st = document.getElementById('statusTxt');
                 if(r.estado === "DEVUELTO") {
                     st.className = "status status-devuelto"; st.innerText = "Estado: Devolución Completada";
                     document.getElementById('btnDevolver').style.display = "none";
                 } else {
-                    st.className = "status status-registrado"; st.innerText = "Estado: En Custodia";
+                    st.className = "status status-registrado"; st.innerText = "Estado: En Custodia (Registrado)";
                     document.getElementById('btnDevolver').style.display = "block";
                 }
                 document.getElementById('btnFinalizar').style.display = "none";
                 document.getElementById('btnWhatsApp').style.display = "block";
-            } else { alert("No encontrado en IndexedDB"); }
+            } else { alert("ID no encontrado."); }
         };
     }
 
@@ -152,18 +203,26 @@
         const tx = db.transaction("vales", "readwrite");
         const store = tx.objectStore("vales");
         const req = store.get(id);
+
         req.onsuccess = () => {
             const data = req.result;
             data.estado = "DEVUELTO";
             data.fecha = "Cerrado: " + new Date().toLocaleString();
             store.put(data);
-            alert("Ciclo Cerrado");
+
+            // Refrescar visual para PDF
+            document.getElementById('statusTxt').className = "status status-devuelto";
+            document.getElementById('statusTxt').innerText = "Estado: Devolución Completada";
+            document.getElementById('fecha').value = data.fecha;
+
             window.print();
-            nuevo();
+            setTimeout(() => { 
+                alert("Ciclo Cerrado Correctamente.");
+                nuevo(); 
+            }, 1000);
         };
     }
 
-    // 🚀 FUNCIÓN WHATSAPP (EL SUEÑO DEL 7,0)
     function enviarWhatsApp() {
         const id = document.getElementById('idVale').value;
         const prod = document.getElementById('producto').value;
