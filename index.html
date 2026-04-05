@@ -4,6 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AGA PROTOCOLO | TOTIS.CL MASTER</title>
+
+    <!--
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║           REGISTRO DE CORRECCIONES APLICADAS                    ║
+    ║                                                                  ║
+    ║  FALLO-001 │ 🔴 Sin onerror en IndexedDB — falla sin aviso      ║
+    ║  FALLO-002 │ 🔴 Sin guard !db en buscarIDB()                    ║
+    ║  FALLO-003 │ 🔴 Sin guard !db en finalizarProceso()             ║
+    ║  FALLO-004 │ 🔴 Sin null-check en devolverIDB()                 ║
+    ║  FALLO-005 │ 🟠 finalizarProceso no mostraba btnDevolver        ║
+    ║  FALLO-006 │ 🟡 importarJSON sin try/catch                      ║
+    ║  FALLO-007 │ 🟡 manifest.json faltante — PWA no instalable      ║
+    ║  FALLO-008 │ 🟡 Service Worker faltante — no funciona offline   ║
+    ║                                                                  ║
+    ║  TOTAL: 8 correcciones aplicadas                                ║
+    ╚══════════════════════════════════════════════════════════════════╝
+    -->
+
+    <!-- FALLO-007 ✅ — manifest y theme-color para instalar como PWA en S25 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a3a5a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -83,26 +107,54 @@
 </div>
 
 <script>
+
     let db;
     const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx    = canvas.getContext('2d');
     let dibujando = false;
 
+    // ─────────────────────────────────────────────────────────────────
+    // INDEXED DB
+    // ─────────────────────────────────────────────────────────────────
     const request = indexedDB.open("AGA_DB_PROFESSIONAL", 1);
+
     request.onupgradeneeded = (e) => {
         db = e.target.result;
-        if(!db.objectStoreNames.contains("vales")) db.createObjectStore("vales", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("vales"))
+            db.createObjectStore("vales", { keyPath: "id" });
     };
-    request.onsuccess = (e) => { db = e.target.result; nuevo(); };
 
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        nuevo();
+    };
+
+    // FALLO-001 ✅
+    // Sin este bloque, si IDB falla (modo incógnito, almacenamiento lleno
+    // o permisos denegados en Android), db queda undefined y cualquier
+    // operación posterior crashea en silencio. Especialmente frecuente en S25
+    // cuando el almacenamiento interno está casi lleno.
+    request.onerror = () => {
+        alert("Error al abrir la base de datos. Verifica permisos o almacenamiento disponible.");
+    };
+
+    // ─────────────────────────────────────────────────────────────────
+    // CANVAS — Compatible Mac + Android S25
+    // ─────────────────────────────────────────────────────────────────
     function ajustarCanvas() {
         const wrap = document.getElementById('sig-wrap');
         const rect = wrap.getBoundingClientRect();
-        canvas.width = rect.width; canvas.height = rect.height;
-        ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
+        if (rect.width === 0) return;
+        canvas.width  = rect.width;
+        canvas.height = rect.height;
+        ctx.lineWidth   = 3;
+        ctx.lineCap     = 'round';
+        ctx.strokeStyle = '#000';
     }
 
-    function limpiarCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    function limpiarCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 
     const getPos = (e) => {
         const r = canvas.getBoundingClientRect();
@@ -111,127 +163,223 @@
         return { x, y };
     };
 
-    canvas.addEventListener('touchstart', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, { passive: false });
-    canvas.addEventListener('touchmove', (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, { passive: false });
-    window.addEventListener('touchend', () => dibujando = false);
-    canvas.addEventListener('mousedown', (e) => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-    window.addEventListener('mouseup', () => dibujando = false);
+    canvas.addEventListener('touchstart', (e) => { dibujando = true;  const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchmove',  (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, { passive: false });
+    window.addEventListener('touchend',   () => dibujando = false);
+    canvas.addEventListener('mousedown',  (e) => { dibujando = true;  const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove',  (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    window.addEventListener('mouseup',    () => dibujando = false);
+
+    // Reajuste al rotar pantalla — importante en S25 en terreno
     window.addEventListener('resize', () => { setTimeout(ajustarCanvas, 200); });
 
+    // ─────────────────────────────────────────────────────────────────
+    // NUEVO PROCEDIMIENTO
+    // ─────────────────────────────────────────────────────────────────
     function nuevo() {
-        document.getElementById('idVale').value = "AGA-" + Math.floor(Date.now() / 1000);
-        document.getElementById('fecha').value = new Date().toLocaleDateString('es-CL');
-        document.getElementById('producto').value = "";
+        document.getElementById('idVale').value      = "AGA-" + Math.floor(Date.now() / 1000);
+        document.getElementById('fecha').value       = new Date().toLocaleDateString('es-CL');
+        document.getElementById('producto').value    = "";
         document.getElementById('responsable').value = "";
-        document.getElementById('obs').value = "";
+        document.getElementById('obs').value         = "";
+        document.getElementById('busquedaId').value  = "";
+
         const st = document.getElementById('statusTxt');
         st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#f1c40f] text-black";
         st.innerText = "ESTADO: EN EMISIÓN";
+
         document.getElementById('btnFinalizar').style.display = "block";
-        document.getElementById('btnDevolver').style.display = "none";
-        limpiarCanvas(); 
+        document.getElementById('btnDevolver').style.display  = "none";
+
+        limpiarCanvas();
         setTimeout(ajustarCanvas, 150);
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // BUSCAR EN INDEXED DB
+    // ─────────────────────────────────────────────────────────────────
     function buscarIDB() {
+        // FALLO-002 ✅
+        // En S25, IDB tarda más en abrirse que en Mac. Si el usuario toca
+        // BUSCAR antes de que termine, db es undefined y crashea sin aviso.
+        if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
+
         const id = document.getElementById('busquedaId').value.trim();
-        if (!id) return alert("Ingrese Folio.");
+        if (!id) return alert("Ingresa un ID Folio antes de buscar.");
+
         const tx = db.transaction("vales", "readonly");
         tx.objectStore("vales").get(id).onsuccess = (e) => {
             const r = e.target.result;
             if (!r) return alert("Folio no encontrado.");
-            document.getElementById('idVale').value = r.id;
-            document.getElementById('fecha').value = r.fecha;
-            document.getElementById('producto').value = r.producto;
+
+            document.getElementById('idVale').value      = r.id;
+            document.getElementById('fecha').value       = r.fecha;
+            document.getElementById('producto').value    = r.producto;
             document.getElementById('responsable').value = r.responsable;
-            document.getElementById('obs').value = r.obs;
+            document.getElementById('obs').value         = r.obs;
+
             if (r.firma) {
                 const img = new Image();
-                img.onload = () => { limpiarCanvas(); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+                img.onload = () => {
+                    limpiarCanvas();
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
                 img.src = r.firma;
             }
+
             const st = document.getElementById('statusTxt');
             if (r.estado === "DEVUELTO") {
                 st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#27ae60] text-white";
                 st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
-                document.getElementById('btnDevolver').style.display = "none";
+                document.getElementById('btnDevolver').style.display  = "none";
                 document.getElementById('btnFinalizar').style.display = "none";
             } else {
                 st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#e74c3c] text-white";
                 st.innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
-                document.getElementById('btnDevolver').style.display = "block";
+                document.getElementById('btnDevolver').style.display  = "block";
                 document.getElementById('btnFinalizar').style.display = "none";
             }
         };
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // FINALIZAR Y REGISTRAR
+    // ─────────────────────────────────────────────────────────────────
     function finalizarProceso() {
-        if (!document.getElementById('producto').value || !document.getElementById('responsable').value) return alert("Faltan datos.");
+        // FALLO-003 ✅ — Guard db undefined (igual que FALLO-002)
+        if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
+
+        if (!document.getElementById('producto').value || !document.getElementById('responsable').value)
+            return alert("Faltan datos obligatorios: Equipo y Responsable.");
+
         const firmaData = canvas.toDataURL();
         const vale = {
-            id: document.getElementById('idVale').value,
-            fecha: document.getElementById('fecha').value,
-            producto: document.getElementById('producto').value,
+            id:          document.getElementById('idVale').value,
+            fecha:       document.getElementById('fecha').value,
+            producto:    document.getElementById('producto').value,
             responsable: document.getElementById('responsable').value,
-            obs: document.getElementById('obs').value,
-            firma: firmaData,
-            estado: "REGISTRADO"
+            obs:         document.getElementById('obs').value,
+            firma:       firmaData,
+            estado:      "REGISTRADO"
         };
+
         const tx = db.transaction("vales", "readwrite");
         tx.objectStore("vales").put(vale);
+
         tx.oncomplete = () => {
             document.getElementById('signatureImage').src = firmaData;
-            document.getElementById('statusTxt').innerText = "ESTADO: EN CUSTODIA (REGISTRADO)";
-            document.getElementById('statusTxt').className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#e74c3c] text-white";
+
+            const st = document.getElementById('statusTxt');
+            st.innerText  = "ESTADO: EN CUSTODIA (REGISTRADO)";
+            st.className  = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#e74c3c] text-white";
+
+            // FALLO-005 ✅
+            // En la versión original, tras guardar el registro btnDevolver nunca
+            // aparecía. El flujo EMISIÓN → CUSTODIA → DEVOLUCIÓN quedaba atascado
+            // porque btnFinalizar seguía visible y btnDevolver permanecía oculto.
+            document.getElementById('btnFinalizar').style.display = "none";
+            document.getElementById('btnDevolver').style.display  = "block";
+
             setTimeout(() => { window.print(); }, 500);
         };
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // REGISTRAR DEVOLUCIÓN
+    // ─────────────────────────────────────────────────────────────────
     function devolverIDB() {
-        const id = document.getElementById('idVale').value;
-        const tx = db.transaction("vales", "readwrite");
+        // FALLO-003 ✅ — Guard db undefined
+        if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
+
+        const id    = document.getElementById('idVale').value;
+        const tx    = db.transaction("vales", "readwrite");
         const store = tx.objectStore("vales");
+
         store.get(id).onsuccess = (e) => {
             const data = e.target.result;
+
+            // FALLO-004 ✅
+            // Sin este null-check, si data es undefined (registro eliminado
+            // o IDB corrupta), data.estado="DEVUELTO" lanza TypeError y
+            // congela la app hasta recargar. Frecuente en S25 si el storage
+            // fue limpiado por Android para liberar espacio.
+            if (!data) return alert("Error: Registro no encontrado en base de datos.");
+
             data.estado = "DEVUELTO";
-            data.fecha = new Date().toLocaleDateString('es-CL') + " (Devuelto)";
+            data.fecha  = new Date().toLocaleDateString('es-CL') + " (Devuelto)";
             store.put(data);
+
             tx.oncomplete = () => {
-                document.getElementById('statusTxt').innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
-                document.getElementById('statusTxt').className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#27ae60] text-white";
+                const st = document.getElementById('statusTxt');
+                st.innerText = "ESTADO: DEVOLUCIÓN COMPLETADA";
+                st.className = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#27ae60] text-white";
+                document.getElementById('fecha').value = data.fecha;
+                document.getElementById('btnDevolver').style.display  = "none";
+                document.getElementById('btnFinalizar').style.display = "none";
                 setTimeout(() => { window.print(); }, 500);
             };
         };
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // WHATSAPP
+    // ─────────────────────────────────────────────────────────────────
     function enviarWhatsApp() {
-        const id = document.getElementById('idVale').value;
-        const msg = `*AGA PROTOCOLO*%0A*ID:* ${id}%0A*Estado:* ${document.getElementById('statusTxt').innerText}`;
+        const id   = document.getElementById('idVale').value;
+        const prod = document.getElementById('producto').value;
+        const resp = document.getElementById('responsable').value;
+        const est  = document.getElementById('statusTxt').innerText;
+        const msg  = `*AGA PROTOCOLO*%0A*ID:* ${id}%0A*Equipo:* ${prod}%0A*Responsable:* ${resp}%0A*${est}*`;
         window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // EXPORTAR / IMPORTAR JSON
+    // ─────────────────────────────────────────────────────────────────
     function exportarJSON() {
+        if (!db) return alert("Base de datos no lista.");
         db.transaction("vales", "readonly").objectStore("vales").getAll().onsuccess = (e) => {
-            const blob = new Blob([JSON.stringify(e.target.result, null, 2)], {type: "application/json"});
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
+            const blob = new Blob([JSON.stringify(e.target.result, null, 2)], { type: "application/json" });
+            const a    = document.createElement("a");
+            a.href     = URL.createObjectURL(blob);
             a.download = `AGA_BACKUP_${Date.now()}.json`;
             a.click();
         };
     }
 
     function importarJSON(event) {
-        const file = event.target.files[0];
+        const file   = event.target.files[0];
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = JSON.parse(e.target.result);
-            const tx = db.transaction("vales", "readwrite");
-            data.forEach(item => tx.objectStore("vales").put(item));
-            tx.oncomplete = () => { alert("Importado."); location.reload(); };
+            // FALLO-006 ✅
+            // Sin try/catch, si el archivo JSON está corrupto o mal formado,
+            // JSON.parse() lanza excepción no capturada y la app se congela.
+            // Esto puede ocurrir si el backup fue editado manualmente o está incompleto.
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!Array.isArray(data)) return alert("Formato inválido. El archivo no es un backup AGA.");
+                const tx = db.transaction("vales", "readwrite");
+                data.forEach(item => tx.objectStore("vales").put(item));
+                tx.oncomplete = () => { alert("Importación completada."); location.reload(); };
+            } catch (err) {
+                alert("Archivo inválido. Verifica que sea un backup AGA correcto.");
+            }
         };
         reader.readAsText(file);
     }
+
+    // ─────────────────────────────────────────────────────────────────
+    // FALLO-008 ✅ — Service Worker para funcionamiento offline
+    // Sin esto, sin internet en terreno = app no carga.
+    // Requiere archivo sw.js en la raíz del proyecto.
+    // ─────────────────────────────────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .catch(err => console.warn('SW no registrado:', err));
+        });
+    }
+
 </script>
 </body>
 </html>
