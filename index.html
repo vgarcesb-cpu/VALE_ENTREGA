@@ -50,6 +50,34 @@
             #signatureImage { display: block !important; width: 100%; height: 100%; object-fit: contain; }
         }
         #signatureImage { display: none; }
+
+        /* ── MODAL CONFIRMACIÓN ── */
+        #modalConfirm {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #modalConfirm.show { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 24px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: popIn 0.25s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        @media print { #modalConfirm { display: none !important; } }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen font-sans">
@@ -86,6 +114,22 @@
             <img id="signatureImage" alt="Firma">
         </div>
         <button class="no-print w-full text-right text-red-500 text-[11px] mt-2 font-bold uppercase" onclick="limpiarCanvas()">[ BORRAR FIRMA ]</button>
+    </div>
+</div>
+
+<!-- ── MODAL CONFIRMACIÓN POST-IMPRESIÓN ── -->
+<div id="modalConfirm">
+    <div class="modal-box">
+        <div id="modalIcon" class="text-5xl mb-3">✅</div>
+        <div id="modalTitulo" class="text-lg font-bold uppercase mb-4" style="color:#1a3a5a"></div>
+        <div class="bg-[#f4f7f6] rounded-xl p-4 mb-5 text-left text-sm space-y-2">
+            <div><span class="font-bold text-[#1a3a5a]">FOLIO:</span> <span id="mFolio"></span></div>
+            <div><span class="font-bold text-[#1a3a5a]">EQUIPO:</span> <span id="mEquipo"></span></div>
+            <div><span class="font-bold text-[#1a3a5a]">RESPONSABLE:</span> <span id="mResponsable"></span></div>
+            <div><span class="font-bold text-[#1a3a5a]">FECHA:</span> <span id="mFecha"></span></div>
+        </div>
+        <div id="modalMensaje" class="text-xs text-gray-500 mb-5"></div>
+        <button id="modalBtn" class="w-full text-white p-4 rounded-xl font-bold text-sm uppercase" style="background:#1a3a5a" onclick="cerrarModal()"></button>
     </div>
 </div>
 
@@ -280,7 +324,12 @@
             document.getElementById('btnFinalizar').style.display = "none";
             document.getElementById('btnDevolver').style.display  = "block";
 
-            setTimeout(() => { window.print(); }, 500);
+            setTimeout(() => {
+                window.print();
+                // Modal aparece después del diálogo de impresión
+                // Resuelve la pantalla en blanco del S25 post-print
+                setTimeout(() => mostrarModal('registro'), 1500);
+            }, 500);
         };
     }
 
@@ -316,7 +365,13 @@
                 document.getElementById('fecha').value = data.fecha;
                 document.getElementById('btnDevolver').style.display  = "none";
                 document.getElementById('btnFinalizar').style.display = "none";
-                setTimeout(() => { window.print(); }, 500);
+
+                setTimeout(() => {
+                    window.print();
+                    // Modal aparece después del diálogo de impresión
+                    // El botón "NUEVO PROCEDIMIENTO" del modal llama a nuevo()
+                    setTimeout(() => mostrarModal('devolucion'), 1500);
+                }, 500);
             };
         };
     }
@@ -369,7 +424,47 @@
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // FALLO-008 ✅ — Service Worker para funcionamiento offline
+    // MODAL CONFIRMACIÓN
+    // Aparece después de window.print() para confirmar visualmente
+    // que la operación fue exitosa. Resuelve la confusión en S25
+    // donde la pantalla queda en blanco tras el diálogo de impresión.
+    // ─────────────────────────────────────────────────────────────────
+    let _modalCallback = null;
+
+    function mostrarModal(tipo) {
+        const folio = document.getElementById('idVale').value;
+        const equipo = document.getElementById('producto').value;
+        const resp  = document.getElementById('responsable').value;
+        const fecha = document.getElementById('fecha').value;
+
+        document.getElementById('mFolio').innerText      = folio;
+        document.getElementById('mEquipo').innerText     = equipo;
+        document.getElementById('mResponsable').innerText = resp;
+        document.getElementById('mFecha').innerText      = fecha;
+
+        if (tipo === 'registro') {
+            document.getElementById('modalIcon').innerText    = '📋';
+            document.getElementById('modalTitulo').innerText  = 'Equipo en Custodia';
+            document.getElementById('modalTitulo').style.color = '#e74c3c';
+            document.getElementById('modalMensaje').innerText = 'Registro guardado y PDF generado correctamente.';
+            document.getElementById('modalBtn').innerText     = 'ENTENDIDO';
+            _modalCallback = null;
+        } else if (tipo === 'devolucion') {
+            document.getElementById('modalIcon').innerText    = '✅';
+            document.getElementById('modalTitulo').innerText  = 'Devolución Completada';
+            document.getElementById('modalTitulo').style.color = '#27ae60';
+            document.getElementById('modalMensaje').innerText = 'Devolución registrada y PDF generado correctamente.';
+            document.getElementById('modalBtn').innerText     = 'NUEVO PROCEDIMIENTO';
+            _modalCallback = () => nuevo();
+        }
+
+        document.getElementById('modalConfirm').classList.add('show');
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalConfirm').classList.remove('show');
+        if (_modalCallback) _modalCallback();
+    }
     // Sin esto, sin internet en terreno = app no carga.
     // Requiere archivo sw.js en la raíz del proyecto.
     // ─────────────────────────────────────────────────────────────────
