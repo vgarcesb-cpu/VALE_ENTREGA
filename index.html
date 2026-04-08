@@ -140,7 +140,7 @@
     </div>
     <button class="bg-[#25d366] text-white p-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2" onclick="enviarWhatsApp()">WhatsApp 📱</button>
     <button id="btnFinalizar" class="bg-[#27ae60] text-white p-4 rounded-xl font-bold text-sm" onclick="finalizarProceso()">FINALIZAR Y REGISTRAR</button>
-    <button id="btnDevolver" class="bg-[#8e44ad] text-white p-4 rounded-xl font-bold text-sm hidden" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
+    <button id="btnDevolver" class="bg-[#8e44ad] text-white p-4 rounded-xl font-bold text-sm" style="display:none;" onclick="devolverIDB()">REGISTRAR DEVOLUCIÓN</button>
     <button class="bg-[#7f8c8d] text-white p-4 rounded-xl font-bold text-sm" onclick="nuevo()">NUEVO PROCEDIMIENTO</button>
 
     <div class="flex gap-2 mt-4 pt-4 border-t border-slate-300">
@@ -322,7 +322,7 @@
             // aparecía. El flujo EMISIÓN → CUSTODIA → DEVOLUCIÓN quedaba atascado
             // porque btnFinalizar seguía visible y btnDevolver permanecía oculto.
             document.getElementById('btnFinalizar').style.display = "none";
-            document.getElementById('btnDevolver').style.display  = "block";
+            document.getElementById('btnDevolver').style.display  = "none";
 
             setTimeout(() => {
                 window.print();
@@ -446,9 +446,9 @@
             document.getElementById('modalIcon').innerText    = '📋';
             document.getElementById('modalTitulo').innerText  = 'Equipo en Custodia';
             document.getElementById('modalTitulo').style.color = '#e74c3c';
-            document.getElementById('modalMensaje').innerText = 'Registro guardado y PDF generado correctamente.';
-            document.getElementById('modalBtn').innerText     = 'ENTENDIDO';
-            _modalCallback = null;
+            document.getElementById('modalMensaje').innerText = 'Registro guardado y PDF generado. Para devolver, busca el folio.';
+            document.getElementById('modalBtn').innerText     = 'NUEVO PROCEDIMIENTO';
+            _modalCallback = () => nuevo();
         } else if (tipo === 'devolucion') {
             document.getElementById('modalIcon').innerText    = '✅';
             document.getElementById('modalTitulo').innerText  = 'Devolución Completada';
@@ -470,7 +470,7 @@
     // ─────────────────────────────────────────────────────────────────
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('./sw.js')
                 .catch(err => console.warn('SW no registrado:', err));
         });
     }
