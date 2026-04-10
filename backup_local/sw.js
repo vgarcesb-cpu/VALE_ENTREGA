@@ -1,11 +1,11 @@
-const CACHE_NAME = "vale-entrega-v5";
+const CACHE_NAME = "vale-entrega-v4";
 const FILES_TO_CACHE = [
 "./",
 "./index.html",
+"./original.html",
 "./manifest.json",
-"./icono.png"
-
-
+"./icon-192.png",
+"./icon-512.png"
 ];
 // Instalación
 self.addEventListener("install", function(evt) {

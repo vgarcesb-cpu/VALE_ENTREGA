@@ -1,0 +1,19 @@
+{
+  "name": "Protocolo AGA Totis",
+  "short_name": "AGA Vales",
+  "description": "Sistema de Registro y Control de Protocolos AGA",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#d0d7de",
+  "theme_color": "#1a3a5a",
+  "icons": [
+    {
+      "src": "icono.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
