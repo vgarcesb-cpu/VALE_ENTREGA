@@ -1,175 +1,151 @@
-# AGA Protocolo — Protocolos de Custodia
-### Repositorio: `vgarcesb-cpu/Protocolo_Vales`
-### GitHub Pages: `https://vgarcesb-cpu.github.io/Protocolo_Vales/`
+# VALE DE ENTREGA — PWA AGA
+Sistema de Registro y Control de Vales de Entrega  
+Academia de Guerra Aérea — Fuerza Aérea de Chile  
+Desarrollado por Toti's® | vgarcesb-cpu.github.io/VALE_ENTREGA/
 
 ---
 
-## Estructura del Repositorio
+## CAMBIO DE NOMBRE PWA
+Registro del proceso de cambio de nombre de la aplicación, desde **Protocolo_Vales** hacia **Vale de Entrega**, realizado el 09-04-2026.
 
-| Archivo | Descripción |
-|---------|-------------|
-| `index.html` | App principal — AGA Protocolo con Tailwind + PWA |
-| `manifest.json` | Configuración PWA (nombre, íconos, modo pantalla completa) |
-| `sw.js` | Service Worker — caché offline (versión actual: v4) |
-| `icon-192.png` | Ícono PWA 192×192 para pantalla de inicio |
-| `icon-512.png` | Ícono PWA 512×512 alta resolución |
-| `README.md` | Este documento |
+### Pasos realizados en orden
+
+**1. Edición de `index.html` en GitHub**
+
+| Línea | Texto anterior | Texto nuevo |
+|-------|----------------|-------------|
+| 6 | `AGA PROTOCOLO \| TOTIS.CL MASTER` | `VALE DE ENTREGA \| TOTIS.CL` |
+| 86 | `PROTOCOLOS AGA` | `VALE DE ENTREGA` |
+| 387 | `*AGA PROTOCOLO*` | `*VALE DE ENTREGA*` |
+
+**2. Edición de `manifest.json` en GitHub**
+
+| Campo | Valor anterior | Valor nuevo |
+|-------|----------------|-------------|
+| `name` | `Protocolo AGA Totis` | `Vale de Entrega AGA` |
+| `short_name` | `AGA Vales` | `Vale de Entrega` |
+
+**3. Commit de todos los cambios**
+
+Se realizó commit con `index.html` y `manifest.json` antes de renombrar el repositorio.
+
+**4. Renombrado del repositorio en GitHub**
+
+Ruta: `Settings → General → Repository name`
+
+| Nombre anterior | Nombre nuevo |
+|-----------------|--------------|
+| `Protocolo_Vales` | `VALE_ENTREGA` |
+
+Nueva URL de GitHub Pages:
+```
+https://vgarcesb-cpu.github.io/VALE_ENTREGA/
+```
+
+**5. Reinstalación de la PWA en Samsung S25**
+
+- Se desinstalió la PWA anterior
+- Se esperó ~2 minutos para propagación de GitHub Pages
+- Se abrió la nueva URL en Chrome
+- Se instaló nuevamente → Agregar a pantalla de inicio
+- El ícono apareció con el nuevo nombre **Vale de Entrega** ✅
 
 ---
 
-## Flujo Operacional
+## CONFIGURACIÓN ENTORNO MAC
+Registro de la configuración del entorno de desarrollo local realizada el 09-04-2026.
 
-### Estados
+### Pasos realizados en orden
 
-| Estado | Color | Significado |
-|--------|-------|-------------|
-| EN EMISIÓN | 🟡 Amarillo | Formulario nuevo, listo para llenar |
-| EN CUSTODIA (REGISTRADO) | 🔴 Rojo | Equipo entregado y registrado en IDB |
-| DEVOLUCIÓN COMPLETADA | 🟢 Verde | Equipo devuelto, ciclo cerrado |
+**1. Renombrar carpeta local**
 
-### Secuencia Principal
-
-```
-FASE 1 — REGISTRO
-
-   Usuario llena: equipo, responsable, observaciones, firma
-   ↓
-   Toca: FINALIZAR Y REGISTRAR
-   ↓
-   Valida campos obligatorios (equipo + responsable)
-   ↓
-   Guarda en IndexedDB → estado: REGISTRADO
-   ↓
-   Imprime PDF automáticamente
-   ↓
-   Modal: "Equipo en Custodia"
-   ↓
-   Botón: NUEVO PROCEDIMIENTO → limpia formulario
-
-
-FASE 2 — DEVOLUCIÓN
-
-   Usuario ingresa folio en campo BUSCAR
-   ↓
-   Toca: BUSCAR
-   ↓
-   Carga datos desde IndexedDB
-   ↓
-   Muestra estado EN CUSTODIA (rojo)
-   ↓
-   Aparece botón: REGISTRAR DEVOLUCIÓN
-   ↓
-   Toca: REGISTRAR DEVOLUCIÓN
-   ↓
-   Actualiza estado en IDB → DEVUELTO
-   ↓
-   Imprime PDF automáticamente
-   ↓
-   Modal: "Devolución Completada"
-   ↓
-   Botón: NUEVO PROCEDIMIENTO → limpia formulario
+```bash
+mv ~/Desktop/Protocolo_Vales ~/Desktop/Vale_Entrega
+cd ~/Desktop/Vale_Entrega
 ```
 
-### Botones por Estado
+**2. Inicializar Git y conectar al repositorio**
 
-| Estado | FINALIZAR | DEVOLVER | NUEVO |
-|--------|-----------|----------|-------|
-| En emisión | ✅ Visible | ❌ Oculto | ✅ Visible |
-| En custodia (vía BUSCAR) | ❌ Oculto | ✅ Visible | ✅ Visible |
-| Devuelto | ❌ Oculto | ❌ Oculto | ✅ Visible |
+La carpeta local no tenía Git inicializado — se configuró desde cero:
 
-### Acciones Independientes
-
-| Acción | Función | Descripción |
-|--------|---------|-------------|
-| BUSCAR | `buscarIDB()` | Busca folio en IndexedDB y carga datos |
-| WhatsApp | `enviarWhatsApp()` | Envía resumen por WhatsApp vía `wa.me` |
-| NUEVO PROCEDIMIENTO | `nuevo()` | Limpia todo y genera nuevo folio |
-| EXPORTAR DB | `exportarJSON()` | Descarga backup completo como .json |
-| IMPORTAR DB | `importarJSON()` | Restaura backup desde archivo .json |
-
----
-
-## Arquitectura PWA
-
-### Dentro del HTML (embebido)
-
-| Elemento | Descripción |
-|----------|-------------|
-| CSS | Tailwind CDN + estilos custom |
-| JavaScript | Toda la lógica de la app |
-| Formularios | Estructura HTML completa |
-| Meta tags PWA | theme-color, apple-mobile-web-app |
-| Modal confirmación | Aparece post-impresión (evita pantalla blanca S25) |
-
-### Archivos Externos (en el repositorio)
-
-| Archivo | Referenciado desde | Función |
-|---------|--------------------|---------|
-| `manifest.json` | `<link rel="manifest">` | Configuración instalación PWA |
-| `sw.js` | `navigator.serviceWorker.register('./sw.js')` | Caché modo offline |
-| `icon-192.png` | manifest.json | Ícono pantalla inicio |
-| `icon-512.png` | manifest.json | Ícono alta resolución |
-
-### Service Worker — Gestión de Caché
-
-Cada vez que se modifica un archivo, subir versión en `sw.js`:
-
-```
-v1 → v2 → v3 → v4 (actual)
+```bash
+git init
+git remote add origin https://github.com/vgarcesb-cpu/VALE_ENTREGA.git
 ```
 
----
+**3. Sincronizar archivos desde GitHub**
 
-## Correcciones Aplicadas
-
-| # | Tipo | Descripción |
-|---|------|-------------|
-| FALLO-001 | 🔴 Crítico | Sin `onerror` en IndexedDB — falla sin aviso |
-| FALLO-002 | 🔴 Crítico | Sin guard `!db` en `buscarIDB()` |
-| FALLO-003 | 🔴 Crítico | Sin guard `!db` en `finalizarProceso()` |
-| FALLO-004 | 🔴 Crítico | Sin null-check en `devolverIDB()` |
-| FALLO-005 | 🟠 Medio | `finalizarProceso` no mostraba `btnDevolver` |
-| FALLO-006 | 🟡 Menor | `importarJSON` sin try/catch |
-| FALLO-007 | 🟡 Menor | `manifest.json` faltante — PWA no instalable |
-| FALLO-008 | 🟡 Menor | Service Worker faltante — no funciona offline |
-| FIX-SW | 🟡 Menor | Ruta SW corregida: `/sw.js` → `./sw.js` |
-| FIX-HIDDEN | 🟠 Medio | Clase Tailwind `hidden` conflicto con inline style |
-| FIX-FLUJO | 🟠 Medio | Después de FINALIZAR → limpia con `nuevo()`, DEVOLVER solo vía BUSCAR |
-
-**Total: 11 correcciones aplicadas**
-
----
-
-## Entorno de Desarrollo
-
-| Dispositivo | Uso |
-|-------------|-----|
-| Mac | Desarrollo principal (Chrome/Safari + Git) |
-| GitHub Pages | Validación pública |
-| Samsung S25 | Prueba final en terreno (juez definitivo) |
-| PC Windows | Consulta e impresión en oficina |
-
-### Flujo de Deploy
-
+```bash
+mkdir backup_local && mv README.md index.html manifest.json sw.js backup_local/
+git pull origin main
 ```
-1. Desarrollar en Mac → probar localmente
-2. Subir a GitHub (Add file → Upload files)
-3. Esperar deploy GitHub Pages (1-2 min, check verde ✅)
-4. Limpiar caché del S25 (Chrome → ⋮ → Configuración → Borrar datos)
-5. Probar en S25 el ciclo completo
+
+**4. Instalación de VS Code**
+
+- Descargado desde https://code.visualstudio.com
+- Idioma configurado en español: ⌘ + Shift + P → Configure Display Language → Español
+- Carpeta Vale_Entrega abierta con ⌘ + O
+
+**5. Corrección de `sw.js`**
+
+| Línea | Cambio |
+|-------|--------|
+| 1 | `vale-entrega-v4` → `vale-entrega-v5` |
+| Eliminadas | `./original.html`, `./icon-192.png`, `./icon-512.png` |
+| Agregada | `./icono.png` |
+
+**6. Generación de Token GitHub**
+
+Ruta: `GitHub → Foto perfil → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic)`
+
+Configuración del token:
+- Note: `Vale_Entrega Mac`
+- Expiration: `90 days`
+- Scope: `repo` ✅
+
+⚠️ El token solo se muestra una vez — guardar captura en lugar privado y seguro.
+
+**7. Primer push desde Mac**
+
+```bash
+git add .
+git commit -m "sw.js actualizado a v5 con archivos correctos"
+git push origin main
+```
+
+Username: `vgarcesb-cpu`  
+Password: pegar el token generado
+
+**8. Actualizar URL remota**
+
+```bash
+git remote set-url origin https://github.com/vgarcesb-cpu/VALE_ENTREGA.git
 ```
 
 ---
 
-## Notas Importantes
+## FLUJO DE TRABAJO DESDE AHORA
 
-- **Caché S25:** Después de cada cambio, limpiar caché del navegador en el celular.
-- **Service Worker:** Siempre subir `CACHE_NAME` en `sw.js` al hacer cambios.
-- **Tailwind CDN:** La primera carga requiere internet para descargar los estilos.
-- **IndexedDB:** Los datos se guardan localmente en el dispositivo, no en el servidor.
-- **Backup:** Usar EXPORTAR DB regularmente para respaldar los registros.
+```
+1. Editar archivo en VS Code
+2. Guardar con ⌘ + S
+3. Abrir Terminal
+4. cd ~/Desktop/Vale_Entrega
+5. git add .
+6. git commit -m "descripción del cambio"
+7. git push origin main
+8. Verificar en S25
+```
 
 ---
 
-*Documentación generada — Proyecto Toti's® para Academia de Guerra Aérea, FACH*
+## ⚠️ NOTAS IMPORTANTES
+
+- El token GitHub expira en 90 días — generar uno nuevo en Developer settings cuando expire
+- Siempre verificar cambios en Samsung S25 — es el juez definitivo
+- Nunca compartir el token por WhatsApp ni correo
+- Antes de editar, ejecutar `git pull origin main` para partir de la versión más reciente
+
+---
+
+*Documentado por Toti's® — Sistema PWA AGA | FACH | 09-04-2026*
