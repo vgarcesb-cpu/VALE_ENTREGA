@@ -386,8 +386,8 @@
         const prod = document.getElementById('producto').value;
         const resp = document.getElementById('responsable').value;
         const est  = document.getElementById('statusTxt').innerText;
-        const msg  = `*VALE DE ENTREGA*%0A*ID:* ${id}%0A*Equipo:* ${prod}%0A*Responsable:* ${resp}%0A*${est}*`;
-        window.open(`https://wa.me/?text=${msg}`, '_blank');
+        const texto = `*VALE DE ENTREGA*\n*ID:* ${id}\n*Equipo:* ${prod}\n*Responsable:* ${resp}\n*${est}*`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
     }
 
     // ─────────────────────────────────────────────────────────────────
