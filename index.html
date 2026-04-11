@@ -253,6 +253,7 @@
         if (!id) return alert("Ingresa un ID Folio antes de buscar.");
 
         const tx = db.transaction("vales", "readonly");
+        tx.onerror = (e) => alert("Error en base de datos: " + e.target.error);
         tx.objectStore("vales").get(id).onsuccess = (e) => {
             const r = e.target.result;
             if (!r) return alert("Folio no encontrado.");
