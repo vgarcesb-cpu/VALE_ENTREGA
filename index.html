@@ -346,6 +346,7 @@
 
         const id    = document.getElementById('idVale').value;
         const tx    = db.transaction("vales", "readwrite");
+        tx.onerror = (e) => alert("Error en base de datos: " + e.target.error);
         const store = tx.objectStore("vales");
 
         store.get(id).onsuccess = (e) => {
