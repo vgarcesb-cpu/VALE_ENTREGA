@@ -272,6 +272,7 @@
                 const img = new Image();
                 // FALLO-E ✅ — actualizar signatureImage al cargar registro
                 img.onload = () => {
+                    ajustarCanvas();
                     limpiarCanvas();
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     document.getElementById('signatureImage').src = r.firma;
