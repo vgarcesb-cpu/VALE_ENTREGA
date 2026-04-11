@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VALE DE ENTREGA| TOTIS.CL </title>
+    <title>VALE DE ENTREGA | TOTIS.CL</title>
 
     <!--
     ╔══════════════════════════════════════════════════════════════════╗
@@ -17,12 +17,18 @@
     ║  FALLO-006 │ 🟡 importarJSON sin try/catch                      ║
     ║  FALLO-007 │ 🟡 manifest.json faltante — PWA no instalable      ║
     ║  FALLO-008 │ 🟡 Service Worker faltante — no funciona offline   ║
+    ║  FALLO-A   │ 🔴 importarJSON sin guard !db                      ║
+    ║  FALLO-C   │ 🔴 window.print() con 500ms → 800ms para S25      ║
+    ║  FALLO-D   │ 🟠 signatureImage.src no se limpia en nuevo()      ║
+    ║  FALLO-E   │ 🟠 buscarIDB() no actualiza signatureImage.src     ║
+    ║  FALLO-F   │ 🟠 WhatsApp sin encodeURIComponent()               ║
+    ║  FALLO-H   │ 🟡 Sin tx.onerror en transacciones IDB             ║
+    ║  FALLO-L   │ 🟡 Sin orientationchange listener para S25         ║
     ║                                                                  ║
-    ║  TOTAL: 8 correcciones aplicadas                                ║
+    ║  TOTAL: 15 correcciones aplicadas                               ║
     ╚══════════════════════════════════════════════════════════════════╝
     -->
 
-    <!-- FALLO-007 ✅ — manifest y theme-color para instalar como PWA en S25 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a3a5a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -173,11 +179,7 @@
         nuevo();
     };
 
-    // FALLO-001 ✅
-    // Sin este bloque, si IDB falla (modo incógnito, almacenamiento lleno
-    // o permisos denegados en Android), db queda undefined y cualquier
-    // operación posterior crashea en silencio. Especialmente frecuente en S25
-    // cuando el almacenamiento interno está casi lleno.
+    // FALLO-001 ✅ — onerror global IDB
     request.onerror = () => {
         alert("Error al abrir la base de datos. Verifica permisos o almacenamiento disponible.");
     };
@@ -214,7 +216,7 @@
     canvas.addEventListener('mousemove',  (e) => { if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
     window.addEventListener('mouseup',    () => dibujando = false);
 
-    // Reajuste al rotar pantalla — importante en S25 en terreno
+    // FALLO-L ✅ — resize + orientationchange para S25
     window.addEventListener('resize', () => { setTimeout(ajustarCanvas, 200); });
     screen.orientation?.addEventListener('change', () => setTimeout(ajustarCanvas, 350));
 
@@ -236,6 +238,7 @@
         document.getElementById('btnFinalizar').style.display = "block";
         document.getElementById('btnDevolver').style.display  = "none";
 
+        // FALLO-D ✅ — limpiar imagen de firma del vale anterior
         limpiarCanvas();
         document.getElementById('signatureImage').src = '';
         setTimeout(ajustarCanvas, 150);
@@ -246,15 +249,15 @@
     // ─────────────────────────────────────────────────────────────────
     function buscarIDB() {
         // FALLO-002 ✅
-        // En S25, IDB tarda más en abrirse que en Mac. Si el usuario toca
-        // BUSCAR antes de que termine, db es undefined y crashea sin aviso.
         if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
 
         const id = document.getElementById('busquedaId').value.trim();
         if (!id) return alert("Ingresa un ID Folio antes de buscar.");
 
         const tx = db.transaction("vales", "readonly");
+        // FALLO-H ✅ — onerror en transacción
         tx.onerror = (e) => alert("Error en base de datos: " + e.target.error);
+
         tx.objectStore("vales").get(id).onsuccess = (e) => {
             const r = e.target.result;
             if (!r) return alert("Folio no encontrado.");
@@ -267,6 +270,7 @@
 
             if (r.firma) {
                 const img = new Image();
+                // FALLO-E ✅ — actualizar signatureImage al cargar registro
                 img.onload = () => {
                     limpiarCanvas();
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -294,7 +298,7 @@
     // FINALIZAR Y REGISTRAR
     // ─────────────────────────────────────────────────────────────────
     function finalizarProceso() {
-        // FALLO-003 ✅ — Guard db undefined (igual que FALLO-002)
+        // FALLO-003 ✅
         if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
 
         if (!document.getElementById('producto').value || !document.getElementById('responsable').value)
@@ -312,6 +316,7 @@
         };
 
         const tx = db.transaction("vales", "readwrite");
+        // FALLO-H ✅
         tx.onerror = (e) => alert("Error en base de datos: " + e.target.error);
         tx.objectStore("vales").put(vale);
 
@@ -322,17 +327,12 @@
             st.innerText  = "ESTADO: EN CUSTODIA (REGISTRADO)";
             st.className  = "status-box text-center font-bold p-4 mb-5 rounded-xl text-sm uppercase bg-[#e74c3c] text-white";
 
-            // FALLO-005 ✅
-            // En la versión original, tras guardar el registro btnDevolver nunca
-            // aparecía. El flujo EMISIÓN → CUSTODIA → DEVOLUCIÓN quedaba atascado
-            // porque btnFinalizar seguía visible y btnDevolver permanecía oculto.
             document.getElementById('btnFinalizar').style.display = "none";
             document.getElementById('btnDevolver').style.display  = "none";
 
+            // FALLO-C ✅ — 800ms mínimo para que S25 repinte signatureImage
             setTimeout(() => {
                 window.print();
-                // Modal aparece después del diálogo de impresión
-                // Resuelve la pantalla en blanco del S25 post-print
                 setTimeout(() => mostrarModal('registro'), 1500);
             }, 800);
         };
@@ -342,11 +342,12 @@
     // REGISTRAR DEVOLUCIÓN
     // ─────────────────────────────────────────────────────────────────
     function devolverIDB() {
-        // FALLO-003 ✅ — Guard db undefined
+        // FALLO-003 ✅
         if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
 
         const id    = document.getElementById('idVale').value;
         const tx    = db.transaction("vales", "readwrite");
+        // FALLO-H ✅
         tx.onerror = (e) => alert("Error en base de datos: " + e.target.error);
         const store = tx.objectStore("vales");
 
@@ -354,10 +355,6 @@
             const data = e.target.result;
 
             // FALLO-004 ✅
-            // Sin este null-check, si data es undefined (registro eliminado
-            // o IDB corrupta), data.estado="DEVUELTO" lanza TypeError y
-            // congela la app hasta recargar. Frecuente en S25 si el storage
-            // fue limpiado por Android para liberar espacio.
             if (!data) return alert("Error: Registro no encontrado en base de datos.");
 
             data.estado = "DEVUELTO";
@@ -372,10 +369,9 @@
                 document.getElementById('btnDevolver').style.display  = "none";
                 document.getElementById('btnFinalizar').style.display = "none";
 
+                // FALLO-C ✅ — 800ms mínimo para S25
                 setTimeout(() => {
                     window.print();
-                    // Modal aparece después del diálogo de impresión
-                    // El botón "NUEVO PROCEDIMIENTO" del modal llama a nuevo()
                     setTimeout(() => mostrarModal('devolucion'), 1500);
                 }, 800);
             };
@@ -383,7 +379,7 @@
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // WHATSAPP
+    // WHATSAPP — FALLO-F ✅ encodeURIComponent para tildes, ñ, grados
     // ─────────────────────────────────────────────────────────────────
     function enviarWhatsApp() {
         const id   = document.getElementById('idVale').value;
@@ -400,6 +396,7 @@
     function exportarJSON() {
         if (!db) return alert("Base de datos no lista.");
         const txExp = db.transaction("vales", "readonly");
+        // FALLO-H ✅
         txExp.onerror = (e) => alert("Error en base de datos: " + e.target.error);
         txExp.objectStore("vales").getAll().onsuccess = (e) => {
             const blob = new Blob([JSON.stringify(e.target.result, null, 2)], { type: "application/json" });
@@ -411,19 +408,18 @@
     }
 
     function importarJSON(event) {
-        function importarJSON(event) {
+        // FALLO-A ✅ — guard !db en importarJSON
         if (!db) return alert("Base de datos no lista. Intenta de nuevo en un momento.");
         const file   = event.target.files[0];
         const reader = new FileReader();
         reader.onload = (e) => {
             // FALLO-006 ✅
-            // Sin try/catch, si el archivo JSON está corrupto o mal formado,
-            // JSON.parse() lanza excepción no capturada y la app se congela.
-            // Esto puede ocurrir si el backup fue editado manualmente o está incompleto.
             try {
                 const data = JSON.parse(e.target.result);
                 if (!Array.isArray(data)) return alert("Formato inválido. El archivo no es un backup AGA.");
                 const tx = db.transaction("vales", "readwrite");
+                // FALLO-H ✅
+                tx.onerror = (e) => alert("Error en base de datos: " + e.target.error);
                 data.forEach(item => tx.objectStore("vales").put(item));
                 tx.oncomplete = () => { alert("Importación completada."); location.reload(); };
             } catch (err) {
@@ -435,22 +431,14 @@
 
     // ─────────────────────────────────────────────────────────────────
     // MODAL CONFIRMACIÓN
-    // Aparece después de window.print() para confirmar visualmente
-    // que la operación fue exitosa. Resuelve la confusión en S25
-    // donde la pantalla queda en blanco tras el diálogo de impresión.
     // ─────────────────────────────────────────────────────────────────
     let _modalCallback = null;
 
     function mostrarModal(tipo) {
-        const folio = document.getElementById('idVale').value;
-        const equipo = document.getElementById('producto').value;
-        const resp  = document.getElementById('responsable').value;
-        const fecha = document.getElementById('fecha').value;
-
-        document.getElementById('mFolio').innerText      = folio;
-        document.getElementById('mEquipo').innerText     = equipo;
-        document.getElementById('mResponsable').innerText = resp;
-        document.getElementById('mFecha').innerText      = fecha;
+        document.getElementById('mFolio').innerText       = document.getElementById('idVale').value;
+        document.getElementById('mEquipo').innerText      = document.getElementById('producto').value;
+        document.getElementById('mResponsable').innerText = document.getElementById('responsable').value;
+        document.getElementById('mFecha').innerText       = document.getElementById('fecha').value;
 
         if (tipo === 'registro') {
             document.getElementById('modalIcon').innerText    = '📋';
@@ -475,8 +463,9 @@
         document.getElementById('modalConfirm').classList.remove('show');
         if (_modalCallback) _modalCallback();
     }
-    // Sin esto, sin internet en terreno = app no carga.
-    // Requiere archivo sw.js en la raíz del proyecto.
+
+    // ─────────────────────────────────────────────────────────────────
+    // SERVICE WORKER
     // ─────────────────────────────────────────────────────────────────
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
